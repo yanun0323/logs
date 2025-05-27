@@ -14,7 +14,7 @@ func switchableWriter(relativeDir string, filename string) logs.Writer {
 }
 
 func BenchmarkLogsBasic(b *testing.B) {
-	writer := switchableWriter(".", "logger.basic")
+	writer := switchableWriter(".", "logger.basic.log")
 
 	l := logs.New(logs.LevelInfo, &logs.Option{Output: writer})
 
@@ -37,7 +37,7 @@ func BenchmarkLogsBasic(b *testing.B) {
 	})
 }
 func BenchmarkLogsTicker(b *testing.B) {
-	writer := switchableWriter(".", "logger.ticker")
+	writer := switchableWriter(".", "logger.ticker.log")
 
 	l := logs.NewTickerLogger(time.Second, logs.LevelInfo, &logs.Option{Output: writer})
 
@@ -61,7 +61,7 @@ func BenchmarkLogsTicker(b *testing.B) {
 }
 
 func BenchmarkLogsTrace(b *testing.B) {
-	writer := switchableWriter(".", "logger.trace")
+	writer := switchableWriter(".", "logger.trace.log")
 
 	l := logs.NewTraceLogger(logs.LevelInfo, "key", &logs.Option{Output: writer})
 
@@ -85,7 +85,7 @@ func BenchmarkLogsTrace(b *testing.B) {
 }
 
 func BenchmarkSlogWithTextHandler(b *testing.B) {
-	writer := switchableWriter(".", "slog")
+	writer := switchableWriter(".", "slog.log")
 
 	l := slog.New(slog.NewTextHandler(writer, nil))
 	b.RunParallel(func(p *testing.PB) {
@@ -108,7 +108,7 @@ func BenchmarkSlogWithTextHandler(b *testing.B) {
 }
 
 func BenchmarkSlogWithJSONHandler(b *testing.B) {
-	writer := switchableWriter(".", "slog.json")
+	writer := switchableWriter(".", "slog.json.log")
 
 	l := slog.New(slog.NewJSONHandler(writer, nil))
 	b.RunParallel(func(p *testing.PB) {
@@ -131,7 +131,7 @@ func BenchmarkSlogWithJSONHandler(b *testing.B) {
 }
 
 func BenchmarkSlogLogsHandler(b *testing.B) {
-	writer := switchableWriter(".", "slog.logs_handler")
+	writer := switchableWriter(".", "slog.logs_handler.log")
 
 	l := slog.New(internal.NewLoggerHandler(writer, int8(logs.LevelInfo)))
 	b.RunParallel(func(p *testing.PB) {
@@ -154,7 +154,7 @@ func BenchmarkSlogLogsHandler(b *testing.B) {
 }
 
 // func BenchmarkZap(b *testing.B) {
-// 	writer := switchableWriter(".", "zap")
+// 	writer := switchableWriter(".", "zap.log")
 // 	conf := zap.NewProductionEncoderConfig()
 // 	conf.EncodeLevel = zapcore.LowercaseColorLevelEncoder
 
@@ -183,7 +183,7 @@ func BenchmarkSlogLogsHandler(b *testing.B) {
 // }
 
 // func BenchmarkLogrus(b *testing.B) {
-// 	writer := switchableWriter(".", "logrus")
+// 	writer := switchableWriter(".", "logrus.log")
 
 // 	l := logrus.New()
 // 	l.Out = writer

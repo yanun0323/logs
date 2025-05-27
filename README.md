@@ -184,8 +184,8 @@ ok      github.com/yanun0323/logs/test  323.964s
 
 **Key Performance Highlights:**
 
-- **Ultra-fast Ticker Logger**: ~23x faster than basic logging (212.1 ns/op vs 4827 ns/op)
 - **Outperforms Competitors**: Basic logger is ~1.25x faster than Zap and ~1.26x faster than Logrus
+- **Ultra-fast Ticker Logger**: ~23x faster than basic logging (212.1 ns/op vs 4827 ns/op)
 - **Memory Efficient**: Significantly lower memory allocations compared to Zap (272 B vs 1410 B) and Logrus (272 B vs 1593 B)
 - **Fastest Handler**: Custom slog handler achieves best performance at 4654 ns/op
 - **Competitive with slog**: Performance comparable to standard slog while providing additional features
