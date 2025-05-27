@@ -1,0 +1,23 @@
+go test -bench=. -run=none -benchmem -v --count=1 -benchtime=10s ./test/
+goos: darwin
+goarch: arm64
+pkg: github.com/yanun0323/logs/test
+cpu: Apple M2
+BenchmarkLogsBasic
+BenchmarkLogsBasic-8                     2743030              4506 ns/op             256 B/op          9 allocs/op
+BenchmarkLogsTicker
+BenchmarkLogsTicker-8                   57449217               206.9 ns/op           256 B/op          8 allocs/op
+BenchmarkLogsTrace
+BenchmarkLogsTrace-8                     2554839              4862 ns/op            1136 B/op         18 allocs/op
+BenchmarkSlogWithTextHandler
+BenchmarkSlogWithTextHandler-8           2770916              4538 ns/op             240 B/op          6 allocs/op
+BenchmarkSlogWithJSONHandler
+BenchmarkSlogWithJSONHandler-8           2739735              4687 ns/op             240 B/op          6 allocs/op
+BenchmarkSlogLogsHandler
+BenchmarkSlogLogsHandler-8               2850415              4851 ns/op             208 B/op          6 allocs/op
+BenchmarkZap
+BenchmarkZap-8                           2479890              4775 ns/op            1410 B/op         10 allocs/op
+BenchmarkLogrus
+BenchmarkLogrus-8                        2401525              5150 ns/op            1593 B/op         31 allocs/op
+PASS
+ok      github.com/yanun0323/logs/test  100.431s
