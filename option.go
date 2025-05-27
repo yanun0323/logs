@@ -32,21 +32,24 @@ type Option struct {
 // - FormatText: slog.NewTextHandler
 // - FormatJSON: slog.NewJSONHandler
 // - FormatConsole (default): custom handler of logs
-func (opt Option) createLoggerHandler(level Level) slog.Handler {
-	if opt.Output == nil {
-		opt.Output = os.Stdout
-	}
-
+func (opt *Option) createLoggerHandler(level Level) slog.Handler {
 	switch opt.Format {
 	case FormatText:
-		return slog.NewTextHandler(opt.Output, &slog.HandlerOptions{
+		return slog.NewTextHandler(opt.output(), &slog.HandlerOptions{
 			Level: slog.Level(level),
 		})
 	case FormatJSON:
-		return slog.NewJSONHandler(opt.Output, &slog.HandlerOptions{
+		return slog.NewJSONHandler(opt.output(), &slog.HandlerOptions{
 			Level: slog.Level(level),
 		})
 	default:
-		return internal.NewLoggerHandler(opt.Output, int8(level))
+		return internal.NewLoggerHandler(opt.output(), int8(level))
 	}
+}
+
+func (opt *Option) output() io.Writer {
+	if opt.Output == nil {
+		return os.Stdout
+	}
+	return opt.Output
 }
