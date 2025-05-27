@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/yanun0323/logs/internal/buffer"
 )
@@ -13,7 +12,6 @@ type traceLogger struct {
 	Logger
 
 	keyword string
-	stackMu sync.RWMutex
 	stack   *bytes.Buffer
 }
 
@@ -139,9 +137,6 @@ func (l *traceLogger) WithFields(fields map[string]any) Logger {
 }
 
 func (l *traceLogger) fieldsToAttach() map[string]any {
-	l.stackMu.RLock()
-	defer l.stackMu.RUnlock()
-
 	if l.stack.Len() == 0 {
 		return nil
 	}
