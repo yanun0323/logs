@@ -45,3 +45,9 @@ BenchmarkLogrus
 BenchmarkLogrus-8                        2553237              5023 ns/op            1593 B/op         31 allocs/op
 PASS
 ok      github.com/yanun0323/logs/test  101.133s
+
+
+
+BenchmarkLogsTrace-8                     2554839              4862 ns/op            1136 B/op         18 allocs/op
+BenchmarkLogsTrace-8                     2805957              4526 ns/op            1019 B/op         18 allocs/op
+BenchmarkLogsTrace-8                     2751458              4483 ns/op            1003 B/op         18 allocs/op
