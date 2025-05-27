@@ -15,12 +15,11 @@ type loggerNew slog.Logger
 //
 // If option is not provided, the logger will write to the os.Stdout with console format.
 func New(level Level, option ...*Option) Logger {
-	opt := defaultOption
 	if len(option) != 0 {
-		opt = option[0]
+		return (*loggerNew)(slog.New(option[0].createLoggerHandler(level)))
 	}
 
-	return (*loggerNew)(slog.New(opt.createLoggerHandler(level)))
+	return (*loggerNew)(slog.New(defaultOption.createLoggerHandler(level)))
 }
 
 func (l loggerNew) clone() *loggerNew {
@@ -44,7 +43,6 @@ func (l *loggerNew) WithFields(fields map[string]any) Logger {
 		return l
 	}
 
-	// 一次性建立所有 slog.Attr，避免多次 With 呼叫
 	attrs := make([]any, 0, len(fields)*2)
 	for k, v := range fields {
 		attrs = append(attrs, k, v)
