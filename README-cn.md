@@ -184,8 +184,8 @@ ok      github.com/yanun0323/logs/test  323.964s
 
 **关键性能亮点：**
 
-- **超高速 TickerLogger**：比基本日志记录快约 23 倍（212.1 ns/op vs 4827 ns/op）
 - **性能优于竞争对手**：基本日志记录器比 Zap 快约 1.25 倍，比 Logrus 快约 1.26 倍
+- **超高速 TickerLogger**：比基本日志记录快约 23 倍（212.1 ns/op vs 4827 ns/op）
 - **内存高效**：相比 Zap（272 B vs 1410 B）和 Logrus（272 B vs 1593 B）的内存分配显著更少
 - **最快处理器**：自定义 slog 处理器达到最佳性能，为 4654 ns/op
 - **与 slog 竞争力强**：在提供额外功能的同时，性能与标准 slog 相当
