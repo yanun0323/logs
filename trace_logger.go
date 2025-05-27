@@ -1,25 +1,20 @@
 package logs
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"strings"
 	"sync"
-)
 
-// stringBuilderPool 重用 strings.Builder，減少記憶體分配
-var stringBuilderPool = sync.Pool{
-	New: func() any {
-		return &strings.Builder{}
-	},
-}
+	"github.com/yanun0323/logs/internal/buffer"
+)
 
 type traceLogger struct {
 	Logger
 
 	keyword string
 	stackMu sync.RWMutex
-	stack   map[string][]any
+	stack   *bytes.Buffer
 }
 
 // NewTraceLogger creates a new trace logger with the given level and trace field key.
@@ -36,35 +31,21 @@ func NewTraceLogger(level Level, traceFieldKeyword string, option ...*Option) Lo
 	return &traceLogger{
 		keyword: traceFieldKeyword,
 		Logger:  New(level, option...),
-		stack:   make(map[string][]any),
+		stack:   &bytes.Buffer{},
 	}
-}
-
-// 優化：使用更高效的 stack 複製，避免不必要的分配
-func (l *traceLogger) copyStack() map[string][]any {
-	l.stackMu.RLock()
-	defer l.stackMu.RUnlock()
-
-	if len(l.stack) == 0 {
-		return make(map[string][]any)
-	}
-
-	stackCopied := make(map[string][]any, len(l.stack))
-	for k, v := range l.stack {
-		if len(v) > 0 {
-			stackCopied[k] = make([]any, len(v))
-			copy(stackCopied[k], v)
-		}
-	}
-
-	return stackCopied
 }
 
 func (l *traceLogger) clone() *traceLogger {
+	buf := l.stack.Bytes()
+	stack := buffer.Pool.Get().(*bytes.Buffer)
+	stack.Reset()
+	stack.Grow(len(buf) + 256)
+	stack.Write(buf)
+
 	return &traceLogger{
 		keyword: l.keyword,
 		Logger:  l.Logger.Copy(),
-		stack:   l.copyStack(),
+		stack:   stack,
 	}
 }
 
@@ -76,10 +57,22 @@ func (l *traceLogger) Attach(ctx context.Context) context.Context {
 	return context.WithValue(ctx, logKey{}, l)
 }
 
+const (
+	_stackSeparator = " -> "
+)
+
 func (l *traceLogger) WithField(key string, value any) Logger {
 	if key == l.keyword {
-		stack := l.copyStack()
-		stack[key] = append(stack[key], value)
+		buf := l.stack.Bytes()
+		str := fmt.Sprintf("%v", value)
+		stack := buffer.Pool.Get().(*bytes.Buffer)
+		stack.Reset()
+		stack.Grow(len(buf) + len(str) + len(_stackSeparator))
+		stack.Write(buf)
+		if stack.Len() != 0 {
+			stack.WriteString(_stackSeparator)
+		}
+		stack.WriteString(str)
 
 		return &traceLogger{
 			keyword: l.keyword,
@@ -102,13 +95,13 @@ func (l *traceLogger) WithFields(fields map[string]any) Logger {
 
 	var (
 		hasStackFields bool
-		stackFields    = make(map[string]any)
+		stackFields    = make(map[string][]any)
 		normalFields   = make(map[string]any, len(fields))
 	)
 
 	for k, v := range fields {
 		if k == l.keyword {
-			stackFields[k] = v
+			stackFields[k] = append(stackFields[k], v)
 			hasStackFields = true
 		} else {
 			normalFields[k] = v
@@ -123,9 +116,18 @@ func (l *traceLogger) WithFields(fields map[string]any) Logger {
 	}
 
 	if hasStackFields {
-		stack = l.copyStack()
-		for k, v := range stackFields {
-			stack[k] = append(stack[k], v)
+		buf := l.stack.Bytes()
+		for _, val := range stackFields {
+			stack = buffer.Pool.Get().(*bytes.Buffer)
+			stack.Reset()
+			stack.Grow(len(buf) + (len(_stackSeparator)+256)*len(val))
+			stack.Write(buf)
+			for _, v := range val {
+				if stack.Len() != 0 {
+					stack.WriteString(_stackSeparator)
+				}
+				stack.WriteString(fmt.Sprintf("%v", v))
+			}
 		}
 	}
 
@@ -140,41 +142,13 @@ func (l *traceLogger) fieldsToAttach() map[string]any {
 	l.stackMu.RLock()
 	defer l.stackMu.RUnlock()
 
-	if len(l.stack) == 0 {
+	if l.stack.Len() == 0 {
 		return nil
 	}
 
-	fields := make(map[string]any, len(l.stack))
-	builder := stringBuilderPool.Get().(*strings.Builder)
-	defer func() {
-		builder.Reset()
-		stringBuilderPool.Put(builder)
-	}()
-
-	for k, v := range l.stack {
-		if len(v) == 0 {
-			continue
-		}
-
-		builder.Grow(len(v) * 10)
-
-		for i, elem := range v {
-			if i > 0 {
-				builder.WriteString(" -> ")
-			}
-
-			if str, ok := elem.(string); ok {
-				builder.WriteString(str)
-			} else {
-				builder.WriteString(fmt.Sprintf("%v", elem))
-			}
-		}
-
-		fields[k] = builder.String()
-		builder.Reset()
+	return map[string]any{
+		l.keyword: l.stack.String(),
 	}
-
-	return fields
 }
 
 func (l *traceLogger) withFieldsIfNeeded() Logger {

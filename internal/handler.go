@@ -7,7 +7,8 @@ import (
 	"io"
 	"log/slog"
 	"strconv"
-	"sync"
+
+	"github.com/yanun0323/logs/internal/buffer"
 )
 
 const (
@@ -44,13 +45,6 @@ var (
 	}
 )
 
-// 使用 buffer pool 來重用 buffer，減少記憶體分配
-var bufferPool = sync.Pool{
-	New: func() any {
-		return &bytes.Buffer{}
-	},
-}
-
 type loggerHandler struct {
 	level *int8
 	attrs []slog.Attr
@@ -74,9 +68,9 @@ func (h *loggerHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (h *loggerHandler) Handle(ctx context.Context, r slog.Record) error {
-	buf := bufferPool.Get().(*bytes.Buffer)
+	buf := buffer.Pool.Get().(*bytes.Buffer)
 	buf.Reset()
-	defer bufferPool.Put(buf)
+	defer buffer.Pool.Put(buf)
 
 	buf.Grow(256)
 
@@ -105,7 +99,6 @@ func (h *loggerHandler) writeAttrs(buf *bytes.Buffer) {
 		str string
 	)
 	for _, attr := range h.attrs {
-
 		if key, ok := fieldKeyCache[attr.Key]; ok {
 			buf.WriteString(key)
 		} else {
