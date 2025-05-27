@@ -5,8 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/yanun0323/logs"
 	"github.com/yanun0323/logs/internal"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func switchableWriter(relativeDir string, filename string) logs.Writer {
@@ -25,7 +28,7 @@ func BenchmarkLogsBasic(b *testing.B) {
 		}
 	})
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		l.Info("test")
 		l.WithField("key", "value").Info("test")
 	}
@@ -48,7 +51,7 @@ func BenchmarkLogsTicker(b *testing.B) {
 		}
 	})
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		l.Info("test")
 		l.WithField("key", "value").Info("test")
 	}
@@ -72,7 +75,7 @@ func BenchmarkLogsTrace(b *testing.B) {
 		}
 	})
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		l.Info("test")
 		l.WithField("key", "value").Info("test")
 	}
@@ -95,7 +98,7 @@ func BenchmarkSlogWithTextHandler(b *testing.B) {
 		}
 	})
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		l.Info("test")
 		l.With("key", "value").Info("test")
 	}
@@ -118,7 +121,7 @@ func BenchmarkSlogWithJSONHandler(b *testing.B) {
 		}
 	})
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		l.Info("test")
 		l.With("key", "value").Info("test")
 	}
@@ -141,7 +144,7 @@ func BenchmarkSlogLogsHandler(b *testing.B) {
 		}
 	})
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		l.Info("test")
 		l.With("key", "value").Info("test")
 	}
@@ -153,55 +156,55 @@ func BenchmarkSlogLogsHandler(b *testing.B) {
 	})
 }
 
-// func BenchmarkZap(b *testing.B) {
-// 	writer := switchableWriter(".", "zap")
-// 	conf := zap.NewProductionEncoderConfig()
-// 	conf.EncodeLevel = zapcore.LowercaseColorLevelEncoder
+func BenchmarkZap(b *testing.B) {
+	writer := switchableWriter(".", "zap")
+	conf := zap.NewProductionEncoderConfig()
+	conf.EncodeLevel = zapcore.LowercaseColorLevelEncoder
 
-// 	l := zap.New(zapcore.NewCore(
-// 		zapcore.NewConsoleEncoder(conf),
-// 		writer,
-// 		zap.NewAtomicLevelAt(zap.InfoLevel),
-// 	))
-// 	b.RunParallel(func(p *testing.PB) {
-// 		for p.Next() {
-// 			l.Info("test")
-// 			l.With(zap.Any("key", "value")).Info("test")
-// 		}
-// 	})
+	l := zap.New(zapcore.NewCore(
+		zapcore.NewConsoleEncoder(conf),
+		writer,
+		zap.NewAtomicLevelAt(zap.InfoLevel),
+	))
+	b.RunParallel(func(p *testing.PB) {
+		for p.Next() {
+			l.Info("test")
+			l.With(zap.Any("key", "value")).Info("test")
+		}
+	})
 
-// 	for i := 0; i < b.N; i++ {
-// 		l.Info("test")
-// 		l.With(zap.Any("key", "value")).Info("test")
-// 	}
+	for b.Loop() {
+		l.Info("test")
+		l.With(zap.Any("key", "value")).Info("test")
+	}
 
-// 	b.Cleanup(func() {
-// 		if err := writer.Remove(); err != nil {
-// 			b.Fatalf("remove writerZ failed: %v", err)
-// 		}
-// 	})
-// }
+	b.Cleanup(func() {
+		if err := writer.Remove(); err != nil {
+			b.Fatalf("remove writerZ failed: %v", err)
+		}
+	})
+}
 
-// func BenchmarkLogrus(b *testing.B) {
-// 	writer := switchableWriter(".", "logrus")
+func BenchmarkLogrus(b *testing.B) {
+	writer := switchableWriter(".", "logrus")
 
-// 	l := logrus.New()
-// 	l.Out = writer
-// 	b.RunParallel(func(p *testing.PB) {
-// 		for p.Next() {
-// 			l.Info("test")
-// 			l.WithField("key", "value").Info("test")
-// 		}
-// 	})
+	l := logrus.New()
+	l.Out = writer
+	b.RunParallel(func(p *testing.PB) {
+		for p.Next() {
+			l.Info("test")
+			l.WithField("key", "value").Info("test")
+		}
+	})
 
-// 	for i := 0; i < b.N; i++ {
-// 		l.Info("test")
-// 		l.WithField("key", "value").Info("test")
-// 	}
+	for b.Loop() {
+		l.Info("test")
+		l.WithField("key", "value").Info("test")
+	}
 
-// 	b.Cleanup(func() {
-// 		if err := writer.Remove(); err != nil {
-// 			b.Fatalf("remove writerL failed: %v", err)
-// 		}
-// 	})
-// }
+	b.Cleanup(func() {
+		if err := writer.Remove(); err != nil {
+			b.Fatalf("remove writerL failed: %v", err)
+		}
+	})
+}
