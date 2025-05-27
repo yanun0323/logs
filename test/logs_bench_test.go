@@ -19,7 +19,7 @@ func switchableWriter(relativeDir string, filename string) logs.Writer {
 func BenchmarkLogsBasic(b *testing.B) {
 	writer := switchableWriter(".", "logger.basic")
 
-	l := logs.New(logs.LevelInfo, writer)
+	l := logs.New(logs.LevelInfo, &logs.Option{Output: writer})
 
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
@@ -42,7 +42,7 @@ func BenchmarkLogsBasic(b *testing.B) {
 func BenchmarkLogsTicker(b *testing.B) {
 	writer := switchableWriter(".", "logger.ticker")
 
-	l := logs.NewTickerLogger(time.Second, logs.LevelInfo, writer)
+	l := logs.NewTickerLogger(time.Second, logs.LevelInfo, &logs.Option{Output: writer})
 
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
@@ -66,7 +66,7 @@ func BenchmarkLogsTicker(b *testing.B) {
 func BenchmarkLogsTrace(b *testing.B) {
 	writer := switchableWriter(".", "logger.trace")
 
-	l := logs.NewTraceLogger(logs.LevelInfo, "key", writer)
+	l := logs.NewTraceLogger(logs.LevelInfo, "key", &logs.Option{Output: writer})
 
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {

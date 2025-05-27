@@ -1,0 +1,52 @@
+package logs
+
+import (
+	"io"
+	"log/slog"
+	"os"
+
+	"github.com/yanun0323/logs/internal"
+)
+
+// defaultOption is the default configuration used when no Option is provided.
+// It uses console format and outputs to os.Stdout.
+var defaultOption = &Option{
+	Format: FormatConsole,
+	Output: os.Stdout,
+}
+
+// Option represents the configuration options for creating loggers.
+// It allows customization of the output format and destination.
+type Option struct {
+	// Format specifies the log output format.
+	// Available formats: FormatConsole (default), FormatText, FormatJSON
+	Format Format
+
+	// Output specifies the destination writer for log output.
+	// Defaults to os.Stdout if not specified.
+	Output io.Writer
+}
+
+// createLoggerHandler creates an appropriate slog.Handler based on the Option configuration.
+// It returns different handler types based on the specified Format:
+// - FormatText: slog.NewTextHandler
+// - FormatJSON: slog.NewJSONHandler
+// - FormatConsole (default): custom handler of logs
+func (opt Option) createLoggerHandler(level Level) slog.Handler {
+	if opt.Output == nil {
+		opt.Output = os.Stdout
+	}
+
+	switch opt.Format {
+	case FormatText:
+		return slog.NewTextHandler(opt.Output, &slog.HandlerOptions{
+			Level: slog.Level(level),
+		})
+	case FormatJSON:
+		return slog.NewJSONHandler(opt.Output, &slog.HandlerOptions{
+			Level: slog.Level(level),
+		})
+	default:
+		return internal.NewLoggerHandler(opt.Output, int8(level))
+	}
+}

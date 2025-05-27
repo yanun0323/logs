@@ -3,8 +3,6 @@
 [![English](https://img.shields.io/badge/English-Click-yellow)](README.md)
 [![繁體中文](https://img.shields.io/badge/繁體中文-點擊查看-orange)](README-tw.md)
 [![简体中文](https://img.shields.io/badge/简体中文-点击查看-orange)](README-cn.md)
-[![日本語](https://img.shields.io/badge/日本語-クリック-青)](README-ja.md)
-[![한국어](https://img.shields.io/badge/한국어-클릭-yellow)](README-ko.md)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/yanun0323/logs.svg)](https://pkg.go.dev/github.com/yanun0323/logs)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yanun0323/logs)](https://goreportcard.com/report/github.com/yanun0323/logs)
@@ -15,14 +13,40 @@ A fast, flexible, and feature-rich logging library for Go applications built on 
 
 This library provides a unified interface for structured logging with advanced features like timer-based logging, stack logging, and context integration.
 
+## Appearance
+
+#### Console Format
+
+![Console Format](https://github.com/yanun0323/assets/blob/master/logs.appearance.png?raw=true)
+
+#### Text Format
+
+```log
+time=2025-05-28T04:29:22.422+08:00 level=DEBUG msg="debug message"
+time=2025-05-28T04:29:22.422+08:00 level=INFO msg="info message with fields" fields=val error=<nil> context=context.TODO func=testFunc
+time=2025-05-28T04:29:22.422+08:00 level=WARN msg="warn message with func trace" func="testFunc -> testFunc2 -> testFunc3"
+time=2025-05-28T04:29:22.422+08:00 level=ERROR msg="error message"
+time=2025-05-28T04:29:22.422+08:00 level=ERROR+4 msg="fatal message"
+```
+
+#### JSON Format
+
+```log
+{"time":"2025-05-28T04:24:56.279024+08:00","level":"DEBUG","msg":"debug message"}
+{"time":"2025-05-28T04:24:56.279113+08:00","level":"INFO","msg":"info message with fields","fields":"val","error":null,"context":{},"func":"testFunc"}
+{"time":"2025-05-28T04:24:56.279127+08:00","level":"WARN","msg":"warn message with func trace","func":"testFunc -> testFunc2 -> testFunc3"}
+{"time":"2025-05-28T04:24:56.279137+08:00","level":"ERROR","msg":"error message"}
+{"time":"2025-05-28T04:24:56.279139+08:00","level":"ERROR+4","msg":"fatal message"}
+```
+
 ## Features
 
 - **High Performance**: Outperforms popular logging libraries like Logrus, Zap, and standard slog
 - **Structured Logging**: Built on Go's standard `slog` package for consistent structured output
 - **Multiple Logger Types**:
   - **Standard Logger**: Fast, efficient logging with configurable levels
-  - **Timer Logger**: Rate-limited logging that only outputs after specified intervals
-  - **Stack Logger**: Accumulates field values into stacks for trace-like functionality
+  - **Ticker Logger**: Rate-limited logging that only outputs after specified intervals
+  - **Trace Logger**: Accumulates field values into stacks for trace-like functionality
 - **Context Integration**: First-class support for Go contexts
 - **Field Chaining**: Fluent API for adding structured fields
 - **Configurable Output**: Support for custom output writers
@@ -56,7 +80,7 @@ func main() {
     logger.WithField("user_id", "12345").Info("User logged in")
 
     // Chain multiple fields
-    logger.WithFields(map[string]interface{}{
+    logger.WithFields(map[string]any{
         "method": "POST",
         "path":   "/api/users",
         "status": 201,
@@ -83,37 +107,34 @@ func processData(ctx context.Context) {
 }
 ```
 
-### Timer Logger
+### Ticker Logger
 
-Timer logger is useful for preventing log spam by only outputting messages after a specified interval:
+Ticker logger is useful for preventing log spam by only outputting messages after a specified interval:
 
 ```go
 // Only log once every 5 seconds
-timerLogger := logs.NewTimerLogger(5*time.Second, logs.LevelInfo)
+tickerLogger := logs.NewTickerLogger(5*time.Second, logs.LevelInfo)
 
 for i := 0; i < 1000; i++ {
     // This will only output a few times despite being called 1000 times
-    timerLogger.Info("Processing item", i)
+    tickerLogger.Info("Processing item", i)
     time.Sleep(10 * time.Millisecond)
 }
 ```
 
-### Stack Logger
+### Trace Logger
 
-Stack logger accumulates values for specified field keys, creating a trace-like output:
+Trace logger accumulates values for specified field keys, creating a trace-like output:
 
 ```go
-logger := logs.New(logs.LevelInfo)
-stackLogger := logs.NewStackLogger(logger, "trace", "operation")
-
 // Build up the stack
-stackLogger = stackLogger.WithField("trace", "start")
-stackLogger = stackLogger.WithField("operation", "validate")
-stackLogger = stackLogger.WithField("trace", "middle")
-stackLogger = stackLogger.WithField("operation", "process")
+traceLogger := logs.NewTraceLogger(logs.LevelInfo, "trace")
+traceLogger = traceLogger.WithField("trace", "start")
+traceLogger = traceLogger.WithField("trace", "middle")
+traceLogger = traceLogger.WithField("trace", "end")
 
-// Output will show: trace="start -> middle", operation="validate -> process"
-stackLogger.Info("Operation completed")
+// Output will show: trace="start -> middle -> end"
+traceLogger.Info("Operation completed")
 ```
 
 ## Logger Types
@@ -125,14 +146,14 @@ stackLogger.Info("Operation completed")
 - Configurable output destination
 - Support for all standard log levels
 
-### Timer Logger
+### Ticker Logger
 
 - Prevents log flooding by rate-limiting output
 - Configurable time intervals
 - Thread-safe implementation
 - Useful for high-frequency operations
 
-### Stack Logger
+### Trace Logger
 
 - Accumulates field values into stacks
 - Great for tracing execution paths
@@ -144,36 +165,30 @@ stackLogger.Info("Operation completed")
 Performance comparison with other popular Go logging libraries:
 
 ```bash
-go test -bench=. -run=none -benchmem -v --count=1 ./test/
+go test -bench=. -run=none -benchmem -v --count=1 -benchtime=30s ./test/
 goos: darwin
 goarch: arm64
 pkg: github.com/yanun0323/logs/test
 cpu: Apple M2
-BenchmarkLogsBasic
-BenchmarkLogsBasic-8                      582403              2038 ns/op             216 B/op          7 allocs/op
-BenchmarkLogsTicker
-BenchmarkLogsTicker-8                     666500              2339 ns/op             264 B/op          7 allocs/op
-BenchmarkLogsTrace
-BenchmarkLogsTrace-8                      464137              2360 ns/op            1096 B/op         16 allocs/op
-BenchmarkSlogWithTextHandler
-BenchmarkSlogWithTextHandler-8            551774              2125 ns/op             240 B/op          6 allocs/op
-BenchmarkSlogWithJSONHandler
-BenchmarkSlogWithJSONHandler-8            544542              2079 ns/op             240 B/op          6 allocs/op
-BenchmarkSlogLogsHandler
-BenchmarkSlogLogsHandler-8                585030              1983 ns/op             184 B/op          5 allocs/op
-BenchmarkZap
-BenchmarkZap-8                            525129              2133 ns/op            1386 B/op          8 allocs/op
-BenchmarkLogrus
-BenchmarkLogrus-8                         442356              2584 ns/op            1181 B/op         18 allocs/op
+BenchmarkLogsBasic-8                     8626179              4827 ns/op             272 B/op          9 allocs/op
+BenchmarkLogsTicker-8                  169353175             212.1 ns/op             272 B/op          8 allocs/op
+BenchmarkLogsTrace-8                     7778780              5162 ns/op            1152 B/op         18 allocs/op
+BenchmarkSlogWithTextHandler-8           8255836              5003 ns/op             240 B/op          6 allocs/op
+BenchmarkSlogWithJSONHandler-8           7863826              5220 ns/op             240 B/op          6 allocs/op
+BenchmarkSlogLogsHandler-8               9155694              4654 ns/op             224 B/op          6 allocs/op
+BenchmarkZap-8                           7550286              5410 ns/op            1410 B/op         10 allocs/op
+BenchmarkLogrus-8                        6633025              6055 ns/op            1593 B/op         31 allocs/op
 PASS
-ok      github.com/yanun0323/logs/test  9.759s
+ok      github.com/yanun0323/logs/test  323.964s
 ```
 
 **Key Performance Highlights:**
 
-- **Fastest**: ~1.85x faster than Logrus
-- **Memory Efficient**: Lower memory allocations compared to Zap and Logrus
-- **Competitive**: Similar performance to standard slog while providing additional features
+- **Ultra-fast Ticker Logger**: ~23x faster than basic logging (212.1 ns/op vs 4827 ns/op)
+- **Outperforms Competitors**: Basic logger is ~1.25x faster than Zap and ~1.26x faster than Logrus
+- **Memory Efficient**: Significantly lower memory allocations compared to Zap (272 B vs 1410 B) and Logrus (272 B vs 1593 B)
+- **Fastest Handler**: Custom slog handler achieves best performance at 4654 ns/op
+- **Competitive with slog**: Performance comparable to standard slog while providing additional features
 
 ## API Reference
 
@@ -182,26 +197,27 @@ ok      github.com/yanun0323/logs/test  9.759s
 ```go
 type Logger interface {
     // Basic logging methods
-    Debug(args ...interface{})
-    Debugf(format string, args ...interface{})
-    Info(args ...interface{})
-    Infof(format string, args ...interface{})
-    Warn(args ...interface{})
-    Warnf(format string, args ...interface{})
-    Error(args ...interface{})
-    Errorf(format string, args ...interface{})
-    Fatal(args ...interface{})
-    Fatalf(format string, args ...interface{})
+    Debug(args ...any)
+    Debugf(format string, args ...any)
+    Info(args ...any)
+    Infof(format string, args ...any)
+    Warn(args ...any)
+    Warnf(format string, args ...any)
+    Error(args ...any)
+    Errorf(format string, args ...any)
+    Fatal(args ...any)
+    Fatalf(format string, args ...any)
 
     // Generic logging
-    Log(level Level, args ...interface{})
-    Logf(level Level, format string, args ...interface{})
+    Log(level Level, args ...any)
+    Logf(level Level, format string, args ...any)
 
     // Field management
-    WithField(key string, value interface{}) Logger
-    WithFields(fields map[string]interface{}) Logger
+    WithField(key string, value any) Logger
+    WithFields(fields map[string]any) Logger
     WithError(err error) Logger
     WithContext(ctx context.Context) Logger
+    WithFunc(function string) Logger
 
     // Utility methods
     Copy() Logger
@@ -219,6 +235,70 @@ const (
     LevelError Level = 8
     LevelFatal Level = 12
 )
+```
+
+### Output Formats
+
+The library supports multiple output formats for different use cases:
+
+```go
+type Format int8
+
+const (
+    // FormatConsole outputs logs in a colored, human-readable console format.
+    // This is the default format with enhanced readability for development.
+    FormatConsole Format = iota + 1
+
+    // FormatText outputs logs in standard slog text format.
+    // Format: key=value pairs separated by spaces.
+    FormatText
+
+    // FormatJSON outputs logs in JSON format.
+    // Each log entry is a single JSON object on one line.
+    FormatJSON
+)
+```
+
+### Logger Options
+
+Customize logger behavior using the `Option` struct:
+
+```go
+type Option struct {
+    // Format specifies the log output format.
+    // Available formats: FormatConsole (default), FormatText, FormatJSON
+    Format Format
+
+    // Output specifies the destination writer for log output.
+    // Defaults to os.Stdout if not specified.
+    Output io.Writer
+}
+```
+
+**Usage Examples:**
+
+```go
+// Create logger with JSON format
+logger := logs.New(logs.LevelInfo, &logs.Option{
+    Format: logs.FormatJSON,
+    Output: os.Stdout,
+})
+
+// Create logger with text format writing to file
+file, _ := os.Create("app.log")
+logger := logs.New(logs.LevelDebug, &logs.Option{
+    Format: logs.FormatText,
+    Output: file,
+})
+
+// Create logger with console format (default)
+logger := logs.New(logs.LevelInfo, &logs.Option{
+    Format: logs.FormatConsole,
+    Output: os.Stdout,
+})
+
+// Or simply use defaults
+logger := logs.New(logs.LevelInfo)
 ```
 
 ### Configuration

@@ -10,7 +10,7 @@ import (
 )
 
 func TestVariousLogger(t *testing.T) {
-	l := New(LevelDebug, os.Stdout)
+	l := New(LevelDebug)
 	sl := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	t.Log("logger")
