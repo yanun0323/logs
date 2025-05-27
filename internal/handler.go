@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"strconv"
 	"sync"
 )
@@ -15,6 +14,15 @@ const (
 	KeyError   = "error"
 	KeyContext = "context"
 	KeyFunc    = "func"
+)
+
+const (
+	_space        byte   = ' '
+	_newline      byte   = '\n'
+	_bracketOpen  byte   = '['
+	_bracketClose byte   = ']'
+	_colorPrefix  string = "\x1b["
+	_colorReset   string = "\x1b[0m"
 )
 
 // 預計算的 level 字串，避免運行時計算
@@ -44,18 +52,16 @@ var bufferPool = sync.Pool{
 }
 
 type loggerHandler struct {
-	isStd bool
 	level *int8
 	attrs []slog.Attr
 	out   io.Writer
 }
 
-func NewLoggerHandler(w io.Writer, level int8) *loggerHandler {
+func NewLoggerHandler(w io.Writer, level int8) slog.Handler {
 	return &loggerHandler{
 		level: &level,
 		out:   w,
 		attrs: make([]slog.Attr, 0),
-		isStd: w == os.Stdout || w == os.Stderr,
 	}
 }
 
@@ -75,72 +81,52 @@ func (h *loggerHandler) Handle(ctx context.Context, r slog.Record) error {
 	buf.Grow(256)
 
 	timeStr := r.Time.Format(GetDefaultTimeFormat())
-	if h.isStd {
-		ColorizeToBuffer(buf, timeStr, colorBlack)
-	} else {
-		buf.WriteString(timeStr)
-	}
-
-	buf.WriteByte(' ')
+	ColorizeToBuffer(buf, timeStr, colorBlack)
+	buf.WriteByte(_space)
 
 	level := int8(r.Level)
-	if h.isStd {
-		ColorizeToBuffer(buf, LevelTitle(level), LevelColor(level))
-	} else {
-		buf.WriteString(LevelTitle(level))
-	}
+	ColorizeToBuffer(buf, LevelTitle(level), LevelColor(level))
+	buf.WriteByte(_space)
 
-	buf.WriteByte(' ')
-
-	// Message
 	buf.WriteString(r.Message)
-	buf.WriteString("  ")
+	buf.WriteByte(_space)
+	buf.WriteByte(_space)
 
-	// 寫入預存的屬性
 	h.writeAttrs(buf)
 
-	buf.WriteByte('\n')
+	buf.WriteByte(_newline)
 
 	_, err := h.out.Write(buf.Bytes())
 	return err
 }
 
 func (h *loggerHandler) writeAttrs(buf *bytes.Buffer) {
-	var str string
+	var (
+		str string
+	)
 	for _, attr := range h.attrs {
-		if h.isStd {
-			if key, ok := fieldKeyCache[attr.Key]; ok {
-				buf.WriteString(key)
-			} else {
-				buf.WriteString("\x1b[")
-				buf.WriteString(colorMagenta)
-				buf.WriteByte('m')
-				buf.WriteByte('[')
-				buf.WriteString(attr.Key)
-				buf.WriteByte(']')
-				buf.WriteString("\x1b[0m")
-			}
+
+		if key, ok := fieldKeyCache[attr.Key]; ok {
+			buf.WriteString(key)
 		} else {
-			buf.WriteByte('"')
+			buf.WriteString(_colorPrefix)
+			buf.WriteString(colorMagenta)
+			buf.WriteByte(_bracketOpen)
 			buf.WriteString(attr.Key)
-			buf.WriteByte('"')
-			buf.WriteByte('=')
+			buf.WriteByte(_bracketClose)
+			buf.WriteString(_colorReset)
 		}
 
-		buf.WriteByte(' ')
+		buf.WriteByte(_space)
 		if f, ok := attrValueFunc[attr.Value.Kind()]; ok {
 			str = f(attr.Value)
 		} else {
 			str = fmt.Sprint(attr.Value.Any())
 		}
 
-		if h.isStd {
-			ColorizeToBuffer(buf, str, colorBlack)
-			buf.WriteString("  ")
-		} else {
-			buf.WriteString(str)
-			buf.WriteByte(',')
-		}
+		ColorizeToBuffer(buf, str, colorBlack)
+		buf.WriteByte(_space)
+		buf.WriteByte(_space)
 	}
 }
 
@@ -170,7 +156,6 @@ func (h *loggerHandler) clone() *loggerHandler {
 	copy(newAttrs, h.attrs)
 	return &loggerHandler{
 		level: h.level,
-		isStd: h.isStd,
 		out:   h.out,
 		attrs: newAttrs,
 	}
@@ -193,9 +178,9 @@ func (h *loggerHandler) WithGroup(name string) slog.Handler {
 
 var (
 	fieldKeyCache = map[string]string{
-		KeyError:   "\x1b[" + colorRed + "m[" + KeyError + "]\x1b[0m",
-		KeyContext: "\x1b[" + colorCyan + "m[" + KeyContext + "]\x1b[0m",
-		KeyFunc:    "\x1b[" + colorBrightBlue + "m[" + KeyFunc + "]\x1b[0m",
+		KeyError:   _colorPrefix + colorRed + "[" + KeyError + "]" + _colorReset,
+		KeyContext: _colorPrefix + colorCyan + "[" + KeyContext + "]" + _colorReset,
+		KeyFunc:    _colorPrefix + colorBrightBlue + "[" + KeyFunc + "]" + _colorReset,
 	}
 )
 

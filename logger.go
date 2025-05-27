@@ -3,7 +3,6 @@ package logs
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"os"
 
@@ -14,14 +13,14 @@ type loggerNew slog.Logger
 
 // New creates a new basic logger with the given level and outputs.
 //
-// If outputs is not provided, the logger will write to the os.Stdout.
-func New(level Level, outputs ...io.Writer) Logger {
-	var out io.Writer = os.Stdout
-	if len(outputs) != 0 {
-		out = outputs[0]
+// If option is not provided, the logger will write to the os.Stdout with console format.
+func New(level Level, option ...*Option) Logger {
+	opt := defaultOption
+	if len(option) != 0 {
+		opt = option[0]
 	}
 
-	return (*loggerNew)(slog.New(internal.NewLoggerHandler(out, int8(level))))
+	return (*loggerNew)(slog.New(opt.createLoggerHandler(level)))
 }
 
 func (l loggerNew) clone() *loggerNew {

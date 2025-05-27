@@ -3,7 +3,6 @@ package logs
 import (
 	"context"
 	"fmt"
-	"io"
 	"strings"
 	"sync"
 )
@@ -28,15 +27,15 @@ type traceLogger struct {
 // It will accumulate the values of the specified field keys into a stack,
 // and the stack will be outputted when the logger is called.
 //
-// If outputs is not provided, the logger will write to the os.Stdout.
-func NewTraceLogger(level Level, traceFieldKeyword string, outputs ...io.Writer) Logger {
+// If option is not provided, the logger will write to the os.Stdout with console format.
+func NewTraceLogger(level Level, traceFieldKeyword string, option ...*Option) Logger {
 	if traceFieldKeyword == "" {
-		return New(level, outputs...)
+		return New(level, option...)
 	}
 
 	return &traceLogger{
 		keyword: traceFieldKeyword,
-		Logger:  New(level, outputs...),
+		Logger:  New(level, option...),
 		stack:   make(map[string][]any),
 	}
 }

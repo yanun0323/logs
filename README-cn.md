@@ -3,8 +3,6 @@
 [![English](https://img.shields.io/badge/English-Click-yellow)](README.md)
 [![繁體中文](https://img.shields.io/badge/繁體中文-點擊查看-orange)](README-tw.md)
 [![简体中文](https://img.shields.io/badge/简体中文-点击查看-orange)](README-cn.md)
-[![日本語](https://img.shields.io/badge/日本語-クリック-青)](README-ja.md)
-[![한국어](https://img.shields.io/badge/한국어-클릭-yellow)](README-ko.md)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/yanun0323/logs.svg)](https://pkg.go.dev/github.com/yanun0323/logs)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yanun0323/logs)](https://goreportcard.com/report/github.com/yanun0323/logs)
@@ -15,14 +13,40 @@
 
 该库为结构化日志记录提供统一接口，具有基于计时器的日志记录、堆栈日志记录和上下文集成等高级功能。
 
+## 外观
+
+### Console 格式
+
+![Console Format](https://github.com/yanun0323/assets/blob/master/logs.appearance.png?raw=true)
+
+### 文本格式
+
+```log
+time=2025-05-28T04:29:22.422+08:00 level=DEBUG msg="debug message"
+time=2025-05-28T04:29:22.422+08:00 level=INFO msg="info message with fields" fields=val error=<nil> context=context.TODO func=testFunc
+time=2025-05-28T04:29:22.422+08:00 level=WARN msg="warn message with func trace" func="testFunc -> testFunc2 -> testFunc3"
+time=2025-05-28T04:29:22.422+08:00 level=ERROR msg="error message"
+time=2025-05-28T04:29:22.422+08:00 level=ERROR+4 msg="fatal message"
+```
+
+### JSON 格式
+
+```log
+{"time":"2025-05-28T04:24:56.279024+08:00","level":"DEBUG","msg":"debug message"}
+{"time":"2025-05-28T04:24:56.279113+08:00","level":"INFO","msg":"info message with fields","fields":"val","error":null,"context":{},"func":"testFunc"}
+{"time":"2025-05-28T04:24:56.279127+08:00","level":"WARN","msg":"warn message with func trace","func":"testFunc -> testFunc2 -> testFunc3"}
+{"time":"2025-05-28T04:24:56.279137+08:00","level":"ERROR","msg":"error message"}
+{"time":"2025-05-28T04:24:56.279139+08:00","level":"ERROR+4","msg":"fatal message"}
+```
+
 ## 特色功能
 
 - **高性能**：性能优于 Logrus、Zap 和标准 slog 等流行日志记录库
 - **结构化日志记录**：基于 Go 标准`slog`包，提供一致的结构化输出
 - **多种日志记录器类型**：
   - **标准日志记录器**：快速、高效的日志记录，可配置记录级别
-  - **计时器日志记录器**：速率限制的日志记录，仅在指定间隔后输出
-  - **堆栈日志记录器**：将字段值累积到堆栈中，提供跟踪功能
+  - **TickerLogger**：速率限制的日志记录，仅在指定间隔后输出
+  - **TraceLogger**：将字段值累积到堆栈中，提供跟踪功能
 - **上下文集成**：对 Go 上下文的一流支持
 - **字段链式调用**：流畅的 API 用于添加结构化字段
 - **可配置输出**：支持自定义输出写入器
@@ -56,7 +80,7 @@ func main() {
     logger.WithField("user_id", "12345").Info("用户已登录")
 
     // 链式添加多个字段
-    logger.WithFields(map[string]interface{}{
+    logger.WithFields(map[string]any{
         "method": "POST",
         "path":   "/api/users",
         "status": 201,
@@ -83,37 +107,34 @@ func processData(ctx context.Context) {
 }
 ```
 
-### 计时器日志记录器
+### TickerLogger
 
-计时器日志记录器对于防止日志洪水很有用，只有在指定间隔后才输出消息：
+TickerLogger 对于防止日志洪水很有用，只有在指定间隔后才输出消息：
 
 ```go
 // 每5秒只记录一次
-timerLogger := logs.NewTimerLogger(5*time.Second, logs.LevelInfo)
+tickerLogger := logs.NewTickerLogger(5*time.Second, logs.LevelInfo)
 
 for i := 0; i < 1000; i++ {
     // 尽管被调用1000次，但只会输出几次
-    timerLogger.Info("正在处理项目", i)
+    tickerLogger.Info("正在处理项目", i)
     time.Sleep(10 * time.Millisecond)
 }
 ```
 
-### 堆栈日志记录器
+### TraceLogger
 
-堆栈日志记录器为指定的字段键累积值，创建类似跟踪的输出：
+TraceLogger 为指定的字段键累积值，创建类似跟踪的输出：
 
 ```go
-logger := logs.New(logs.LevelInfo)
-stackLogger := logs.NewStackLogger(logger, "trace", "operation")
-
 // 构建堆栈
-stackLogger = stackLogger.WithField("trace", "start")
-stackLogger = stackLogger.WithField("operation", "validate")
-stackLogger = stackLogger.WithField("trace", "middle")
-stackLogger = stackLogger.WithField("operation", "process")
+traceLogger := logs.NewTraceLogger(logs.LevelInfo, "trace")
+traceLogger = traceLogger.WithField("trace", "start")
+traceLogger = traceLogger.WithField("trace", "middle")
+traceLogger = traceLogger.WithField("trace", "end")
 
-// 输出将显示：trace="start -> middle", operation="validate -> process"
-stackLogger.Info("操作已完成")
+// 输出将显示：trace="start -> middle -> end"
+traceLogger.Info("操作已完成")
 ```
 
 ## 日志记录器类型
@@ -125,14 +146,14 @@ stackLogger.Info("操作已完成")
 - 可配置输出目标
 - 支持所有标准日志级别
 
-### 计时器日志记录器
+### TickerLogger
 
 - 通过速率限制防止日志洪水
 - 可配置时间间隔
 - 线程安全实现
 - 适用于高频率操作
 
-### 堆栈日志记录器
+### TraceLogger
 
 - 将字段值累积到堆栈中
 - 非常适合跟踪执行路径
@@ -144,25 +165,30 @@ stackLogger.Info("操作已完成")
 与其他流行 Go 日志记录库的性能比较：
 
 ```bash
-$ go test -bench=. -run=none -benchmem --count=1 ./test
+go test -bench=. -run=none -benchmem -v --count=1 -benchtime=30s ./test/
 goos: darwin
 goarch: arm64
 pkg: github.com/yanun0323/logs/test
 cpu: Apple M2
-BenchmarkLogs-8                           469046              2533 ns/op             600 B/op         20 allocs/op
-BenchmarkLogrus-8                         259897              4149 ns/op            1181 B/op         18 allocs/op
-BenchmarkSlogWithLogsHandler-8             365598              3958 ns/op             584 B/op         18 allocs/op
-BenchmarkSlog-8                           344457              3430 ns/op             240 B/op          6 allocs/op
-BenchmarkZap-8                            327561              3551 ns/op            1388 B/op          8 allocs/op
+BenchmarkLogsBasic-8                     8626179              4827 ns/op             272 B/op          9 allocs/op
+BenchmarkLogsTicker-8                  169353175             212.1 ns/op             272 B/op          8 allocs/op
+BenchmarkLogsTrace-8                     7778780              5162 ns/op            1152 B/op         18 allocs/op
+BenchmarkSlogWithTextHandler-8           8255836              5003 ns/op             240 B/op          6 allocs/op
+BenchmarkSlogWithJSONHandler-8           7863826              5220 ns/op             240 B/op          6 allocs/op
+BenchmarkSlogLogsHandler-8               9155694              4654 ns/op             224 B/op          6 allocs/op
+BenchmarkZap-8                           7550286              5410 ns/op            1410 B/op         10 allocs/op
+BenchmarkLogrus-8                        6633025              6055 ns/op            1593 B/op         31 allocs/op
 PASS
-ok      github.com/yanun0323/logs/test  7.305s
+ok      github.com/yanun0323/logs/test  323.964s
 ```
 
 **关键性能亮点：**
 
-- **最快速**：比 Logrus 快约 1.85 倍
-- **内存高效**：相比 Zap 和 Logrus 的内存分配更少
-- **竞争力强**：在提供额外功能的同时，性能与标准 slog 相似
+- **超高速 TickerLogger**：比基本日志记录快约 23 倍（212.1 ns/op vs 4827 ns/op）
+- **性能优于竞争对手**：基本日志记录器比 Zap 快约 1.25 倍，比 Logrus 快约 1.26 倍
+- **内存高效**：相比 Zap（272 B vs 1410 B）和 Logrus（272 B vs 1593 B）的内存分配显著更少
+- **最快处理器**：自定义 slog 处理器达到最佳性能，为 4654 ns/op
+- **与 slog 竞争力强**：在提供额外功能的同时，性能与标准 slog 相当
 
 ## API 参考
 
@@ -171,26 +197,27 @@ ok      github.com/yanun0323/logs/test  7.305s
 ```go
 type Logger interface {
     // 基本日志记录方法
-    Debug(args ...interface{})
-    Debugf(format string, args ...interface{})
-    Info(args ...interface{})
-    Infof(format string, args ...interface{})
-    Warn(args ...interface{})
-    Warnf(format string, args ...interface{})
-    Error(args ...interface{})
-    Errorf(format string, args ...interface{})
-    Fatal(args ...interface{})
-    Fatalf(format string, args ...interface{})
+    Debug(args ...any)
+    Debugf(format string, args ...any)
+    Info(args ...any)
+    Infof(format string, args ...any)
+    Warn(args ...any)
+    Warnf(format string, args ...any)
+    Error(args ...any)
+    Errorf(format string, args ...any)
+    Fatal(args ...any)
+    Fatalf(format string, args ...any)
 
     // 通用日志记录
-    Log(level Level, args ...interface{})
-    Logf(level Level, format string, args ...interface{})
+    Log(level Level, args ...any)
+    Logf(level Level, format string, args ...any)
 
     // 字段管理
-    WithField(key string, value interface{}) Logger
-    WithFields(fields map[string]interface{}) Logger
+    WithField(key string, value any) Logger
+    WithFields(fields map[string]any) Logger
     WithError(err error) Logger
     WithContext(ctx context.Context) Logger
+    WithFunc(function string) Logger
 
     // 工具方法
     Copy() Logger
@@ -208,6 +235,70 @@ const (
     LevelError Level = 8
     LevelFatal Level = 12
 )
+```
+
+### 输出格式
+
+该库支持多种输出格式以适应不同的使用场景：
+
+```go
+type Format int8
+
+const (
+    // FormatConsole 输出彩色、人类可读的控制台格式。
+    // 这是默认格式，在开发时具有增强的可读性。
+    FormatConsole Format = iota + 1
+
+    // FormatText 输出标准 slog 文本格式。
+    // 格式：以空格分隔的 key=value 对。
+    FormatText
+
+    // FormatJSON 输出 JSON 格式。
+    // 每个日志条目都是一行中的单个 JSON 对象。
+    FormatJSON
+)
+```
+
+### 日志记录器选项
+
+使用 `Option` 结构自定义日志记录器行为：
+
+```go
+type Option struct {
+    // Format 指定日志输出格式。
+    // 可用格式：FormatConsole（默认）、FormatText、FormatJSON
+    Format Format
+
+    // Output 指定日志输出的目标写入器。
+    // 如果未指定，默认为 os.Stdout。
+    Output io.Writer
+}
+```
+
+**使用示例：**
+
+```go
+// 创建 JSON 格式的日志记录器
+logger := logs.New(logs.LevelInfo, &logs.Option{
+    Format: logs.FormatJSON,
+    Output: os.Stdout,
+})
+
+// 创建文本格式并写入文件的日志记录器
+file, _ := os.Create("app.log")
+logger := logs.New(logs.LevelDebug, &logs.Option{
+    Format: logs.FormatText,
+    Output: file,
+})
+
+// 创建控制台格式的日志记录器（默认）
+logger := logs.New(logs.LevelInfo, &logs.Option{
+    Format: logs.FormatConsole,
+    Output: os.Stdout,
+})
+
+// 或简单使用默认值
+logger := logs.New(logs.LevelInfo)
 ```
 
 ### 配置

@@ -10,7 +10,7 @@ import (
 
 func TestTraceLogger(t *testing.T) {
 	writer := &bytes.Buffer{}
-	trace := NewTraceLogger(LevelDebug, "func", writer)
+	trace := NewTraceLogger(LevelDebug, "func", &Option{Output: writer})
 
 	trace = trace.WithField("func", "func_1")
 	trace = trace.WithField("func", "func_2")
@@ -26,7 +26,7 @@ func TestTraceLogger(t *testing.T) {
 
 func TestTraceLoggerContext(t *testing.T) {
 	writer := &bytes.Buffer{}
-	trace := NewTraceLogger(LevelDebug, "func", writer)
+	trace := NewTraceLogger(LevelDebug, "func", &Option{Output: writer})
 
 	trace = trace.
 		WithField("func", "main").

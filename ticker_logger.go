@@ -2,7 +2,6 @@ package logs
 
 import (
 	"context"
-	"io"
 	"sync/atomic"
 	"time"
 )
@@ -20,13 +19,13 @@ type tickerLogger struct {
 // A ticker logger is a logger that logs messages only when the interval has passed,
 // otherwise the messages will be dropped.
 //
-// If outputs is not provided, the logger will write to the os.Stdout.
-func NewTickerLogger(interval time.Duration, level Level, outputs ...io.Writer) Logger {
+// If option is not provided, the logger will write to the os.Stdout with console format.
+func NewTickerLogger(interval time.Duration, level Level, option ...*Option) Logger {
 	itv := interval.Milliseconds()
 	return &tickerLogger{
 		last:                time.Now().UnixMilli() - itv,
 		intervalMillisecond: itv,
-		Logger:              New(level, outputs...),
+		Logger:              New(level, option...),
 	}
 }
 

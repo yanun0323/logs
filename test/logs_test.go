@@ -20,10 +20,10 @@ func TestLogOutput(t *testing.T) {
 	w3 := logs.FileOutput("", "dir_empty")
 	w4 := logs.FileOutput("hello", "dir_wrong")
 
-	log1 := logs.New(logs.LevelInfo, os.Stdout)
-	log2 := logs.New(logs.LevelInfo, os.Stdout, w2)
-	log3 := logs.New(logs.LevelInfo, os.Stdout, w3)
-	log4 := logs.New(logs.LevelInfo, os.Stdout, w4)
+	log1 := logs.New(logs.LevelInfo)
+	log2 := logs.New(logs.LevelInfo, &logs.Option{Output: w2})
+	log3 := logs.New(logs.LevelInfo, &logs.Option{Output: w3})
+	log4 := logs.New(logs.LevelInfo, &logs.Option{Output: w4})
 
 	t.Logf("log1 = %p, log2 = %p, log3 = %p, log4 = %p", log1, log2, log3, log4)
 	log1.Info("info")
@@ -92,7 +92,7 @@ func TestFatal(t *testing.T) {
 
 func TestLevel(t *testing.T) {
 	writer := &bytes.Buffer{}
-	log := logs.New(logs.LevelWarn, writer)
+	log := logs.New(logs.LevelWarn, &logs.Option{Output: writer})
 	log.Info("LEVEL info")
 	if writer.Len() != 0 {
 		t.Errorf("writer len is not 0")
@@ -109,7 +109,10 @@ func TestLevel(t *testing.T) {
 }
 
 func TestExample(t *testing.T) {
-	l := logs.NewTraceLogger(logs.LevelDebug, "func")
+	l := logs.NewTraceLogger(logs.LevelDebug, "func", &logs.Option{
+		// Output: logs.FileOutput(".", "test_example"),
+		// Format: logs.FormatText,
+	})
 	ctx := context.TODO()
 
 	println()
