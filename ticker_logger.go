@@ -20,7 +20,7 @@ type tickerLogger struct {
 // otherwise the messages will be dropped.
 //
 // If option is not provided, the logger will write to the os.Stdout with console format.
-func NewTickerLogger(interval time.Duration, level Level, option ...*Option) Logger {
+func NewTickerLogger(level Level, interval time.Duration, option ...*Option) Logger {
 	itv := interval.Milliseconds()
 	return &tickerLogger{
 		last:                time.Now().UnixMilli() - itv,

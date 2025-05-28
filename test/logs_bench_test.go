@@ -39,7 +39,7 @@ func BenchmarkLogsBasic(b *testing.B) {
 func BenchmarkLogsTicker(b *testing.B) {
 	writer := switchableWriter(".", "logger.ticker.log")
 
-	l := logs.NewTickerLogger(time.Second, logs.LevelInfo, &logs.Option{Output: writer})
+	l := logs.NewTickerLogger(logs.LevelInfo, time.Second, &logs.Option{Output: writer})
 
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
