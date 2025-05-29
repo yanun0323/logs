@@ -38,7 +38,7 @@ var (
 
 	levelColorCache = map[int8]string{
 		LevelDebug: colorBrightBlue,
-		LevelInfo:  colorBrightGreen,
+		LevelInfo:  colorGreen,
 		LevelWarn:  colorBrightYellow,
 		LevelError: colorBrightRed,
 		LevelFatal: colorReverseRed,
