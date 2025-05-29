@@ -1,4 +1,4 @@
-go test -bench=. -benchmem -v --count=1 -benchtime=10s ./test/
+go test -bench=. -run=none -benchmem -v --count=1 -benchtime=10s ./test/
 goos: darwin
 goarch: arm64
 pkg: github.com/yanun0323/logs/test
@@ -46,6 +46,31 @@ BenchmarkLogrus-8                        2553237              5023 ns/op        
 PASS
 ok      github.com/yanun0323/logs/test  101.133s
 
+go test -bench=. -run=none -benchmem -v --count=1 -benchtime=30s ./test/
+goos: darwin
+goarch: arm64
+pkg: github.com/yanun0323/logs/test
+cpu: Apple M2
+BenchmarkLogsBasic
+BenchmarkLogsBasic-8                     8489860              4422 ns/op             824 B/op         17 allocs/op
+BenchmarkLogsTicker
+BenchmarkLogsTicker-8                   89011921               402.3 ns/op           792 B/op         14 allocs/op
+BenchmarkLogsTrace
+BenchmarkLogsTrace-8                     7605516              4672 ns/op            1816 B/op         32 allocs/op
+BenchmarkSlogWithTextHandler
+BenchmarkSlogWithTextHandler-8           8278644              4386 ns/op             352 B/op          8 allocs/op
+BenchmarkSlogWithJSONHandler
+BenchmarkSlogWithJSONHandler-8           8389680              4338 ns/op             472 B/op         11 allocs/op
+BenchmarkSlogLogsHandler
+BenchmarkSlogLogsHandler-8               8878360              4315 ns/op             352 B/op          9 allocs/op
+BenchmarkZap
+BenchmarkZap-8                           8830804              4169 ns/op            1475 B/op         10 allocs/op
+BenchmarkLogrus
+BenchmarkLogrus-8                        7064040              5175 ns/op            1633 B/op         32 allocs/op
+BenchmarkZeroLog
+BenchmarkZeroLog-8                      10299754              3541 ns/op             224 B/op          4 allocs/op
+PASS
+ok      github.com/yanun0323/logs/test  329.966s
 
 
 BenchmarkLogsTrace-8                     2554839              4862 ns/op            1136 B/op         18 allocs/op

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	zerolog "github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	"github.com/yanun0323/logs"
 	"github.com/yanun0323/logs/internal"
@@ -24,13 +25,19 @@ func BenchmarkLogsBasic(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.WithField("key", "value").Info("test")
+			l.WithFields(map[string]any{
+				"key":  "value",
+				"key2": 123.456,
+			}).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.WithField("key", "value").Info("test")
+		l.WithFields(map[string]any{
+			"key":  "value",
+			"key2": 123.456,
+		}).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -47,13 +54,19 @@ func BenchmarkLogsTicker(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.WithField("key", "value").Info("test")
+			l.WithFields(map[string]any{
+				"key":  "value",
+				"key2": 123.456,
+			}).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.WithField("key", "value").Info("test")
+		l.WithFields(map[string]any{
+			"key":  "value",
+			"key2": 123.456,
+		}).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -71,13 +84,19 @@ func BenchmarkLogsTrace(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.WithField("key", "value").Info("test")
+			l.WithFields(map[string]any{
+				"key":  "value",
+				"key2": 123.456,
+			}).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.WithField("key", "value").Info("test")
+		l.WithFields(map[string]any{
+			"key":  "value",
+			"key2": 123.456,
+		}).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -94,13 +113,13 @@ func BenchmarkSlogWithTextHandler(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.With("key", "value").Info("test")
+			l.With("key", "value", "key2", 123.456).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.With("key", "value").Info("test")
+		l.With("key", "value", "key2", 123.456).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -117,13 +136,13 @@ func BenchmarkSlogWithJSONHandler(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.With("key", "value").Info("test")
+			l.With("key", "value", "key2", 123.456).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.With("key", "value").Info("test")
+		l.With("key", "value", "key2", 123.456).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -140,13 +159,13 @@ func BenchmarkSlogLogsHandler(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.With("key", "value").Info("test")
+			l.With("key", "value", "key2", 123.456).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.With("key", "value").Info("test")
+		l.With("key", "value", "key2", 123.456).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -169,13 +188,13 @@ func BenchmarkZap(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.With(zap.Any("key", "value")).Info("test")
+			l.With(zap.Any("key", "value"), zap.Any("key2", 123.456)).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.With(zap.Any("key", "value")).Info("test")
+		l.With(zap.Any("key", "value"), zap.Any("key2", 123.456)).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -193,13 +212,42 @@ func BenchmarkLogrus(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.WithField("key", "value").Info("test")
+			l.WithFields(map[string]any{
+				"key":  "value",
+				"key2": 123.456,
+			}).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.WithField("key", "value").Info("test")
+		l.WithFields(map[string]any{
+			"key":  "value",
+			"key2": 123.456,
+		}).Info("test")
+	}
+
+	b.Cleanup(func() {
+		if err := writer.Remove(); err != nil {
+			b.Fatalf("remove writerL failed: %v", err)
+		}
+	})
+}
+
+func BenchmarkZeroLog(b *testing.B) {
+	writer := switchableWriter(".", "zerolog.log")
+
+	l := zerolog.Logger.Output(writer)
+	b.RunParallel(func(p *testing.PB) {
+		for p.Next() {
+			l.Info().Msg("test")
+			l.Info().Any("key", "value").Any("key2", 123.456).Msg("test")
+		}
+	})
+
+	for b.Loop() {
+		l.Info().Msg("test")
+		l.Info().Any("key", "value").Any("key2", 123.456).Msg("test")
 	}
 
 	b.Cleanup(func() {
