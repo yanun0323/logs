@@ -5,23 +5,31 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+
+	"github.com/yanun0323/logs/internal"
 )
 
-type loggerNew slog.Logger
+var (
+	bgCtx = context.Background()
+)
+
+type loggerNew struct {
+	*slog.Logger
+}
 
 // New creates a new basic logger with the given level and outputs.
 //
 // If option is not provided, the logger will write to the os.Stdout with console format.
 func New(level Level, option ...*Option) Logger {
 	if len(option) != 0 {
-		return (*loggerNew)(slog.New(option[0].createLoggerHandler(level)))
+		return &loggerNew{Logger: slog.New(option[0].createLoggerHandler(level))}
 	}
 
-	return (*loggerNew)(slog.New(defaultOption.createLoggerHandler(level)))
+	return &loggerNew{Logger: slog.New(defaultOption.createLoggerHandler(level))}
 }
 
-func (l loggerNew) clone() *loggerNew {
-	return (*loggerNew)((*slog.Logger)(&l))
+func (l *loggerNew) clone() *loggerNew {
+	return &loggerNew{Logger: l.Logger}
 }
 
 func (l *loggerNew) Copy() Logger {
@@ -29,7 +37,7 @@ func (l *loggerNew) Copy() Logger {
 }
 
 func (l *loggerNew) withField(key string, value any) *loggerNew {
-	return (*loggerNew)((*slog.Logger)(l).With(key, value))
+	return &loggerNew{Logger: l.Logger.With(key, value)}
 }
 
 func (l *loggerNew) WithField(key string, value any) Logger {
@@ -46,7 +54,7 @@ func (l *loggerNew) WithFields(fields map[string]any) Logger {
 		attrs = append(attrs, k, v)
 	}
 
-	return (*loggerNew)((*slog.Logger)(l).With(attrs...))
+	return &loggerNew{Logger: l.Logger.With(attrs...)}
 }
 
 func (l *loggerNew) WithError(err error) Logger {
@@ -66,25 +74,34 @@ func (l *loggerNew) Attach(ctx context.Context) context.Context {
 }
 
 func (l *loggerNew) Log(level Level, args ...any) {
-	if len(args) == 0 {
-		(*slog.Logger)(l).Log(context.Background(), slog.Level(level), "")
-		return
-	}
-	if len(args) == 1 {
+	slogLevel := slog.Level(level)
+
+	switch len(args) {
+	case 0:
+		l.Logger.Log(bgCtx, slogLevel, "")
+	case 1:
 		if str, ok := args[0].(string); ok {
-			(*slog.Logger)(l).Log(context.Background(), slog.Level(level), str)
-			return
+			l.Logger.Log(bgCtx, slogLevel, str)
+		} else {
+			// 直接使用 fmt.Sprint 但只針對單個值
+			l.Logger.Log(bgCtx, slogLevel, internal.ValueToString(args[0]))
 		}
+	case 2:
+		l.Logger.Log(bgCtx, slogLevel, fmt.Sprint(args[0], " ", args[1]))
+	default:
+		l.Logger.Log(bgCtx, slogLevel, fmt.Sprint(args...))
 	}
-	(*slog.Logger)(l).Log(context.Background(), slog.Level(level), fmt.Sprint(args...))
 }
 
 func (l *loggerNew) Logf(level Level, format string, args ...any) {
+	slogLevel := slog.Level(level)
+
 	if len(args) == 0 {
-		(*slog.Logger)(l).Log(context.Background(), slog.Level(level), format)
-	} else {
-		(*slog.Logger)(l).Log(context.Background(), slog.Level(level), fmt.Sprintf(format, args...))
+		l.Logger.Log(bgCtx, slogLevel, format)
+		return
 	}
+
+	l.Logger.Log(bgCtx, slogLevel, fmt.Sprintf(format, args...))
 }
 
 func (l *loggerNew) Debug(args ...any) {
@@ -96,11 +113,28 @@ func (l *loggerNew) Debugf(format string, args ...any) {
 }
 
 func (l *loggerNew) Info(args ...any) {
-	l.Log(LevelInfo, args...)
+	switch len(args) {
+	case 0:
+		l.Logger.Log(bgCtx, slog.LevelInfo, "")
+	case 1:
+		if str, ok := args[0].(string); ok {
+			l.Logger.Log(bgCtx, slog.LevelInfo, str)
+		} else {
+			l.Logger.Log(bgCtx, slog.LevelInfo, fmt.Sprint(args[0]))
+		}
+	case 2:
+		l.Logger.Log(bgCtx, slog.LevelInfo, fmt.Sprint(args[0], " ", args[1]))
+	default:
+		l.Logger.Log(bgCtx, slog.LevelInfo, fmt.Sprint(args...))
+	}
 }
 
 func (l *loggerNew) Infof(format string, args ...any) {
-	l.Logf(LevelInfo, format, args...)
+	if len(args) == 0 {
+		l.Logger.Log(bgCtx, slog.LevelInfo, format)
+		return
+	}
+	l.Logger.Log(bgCtx, slog.LevelInfo, fmt.Sprintf(format, args...))
 }
 
 func (l *loggerNew) Warn(args ...any) {
@@ -112,11 +146,28 @@ func (l *loggerNew) Warnf(format string, args ...any) {
 }
 
 func (l *loggerNew) Error(args ...any) {
-	l.Log(LevelError, args...)
+	switch len(args) {
+	case 0:
+		l.Logger.Log(bgCtx, slog.LevelError, "")
+	case 1:
+		if str, ok := args[0].(string); ok {
+			l.Logger.Log(bgCtx, slog.LevelError, str)
+		} else {
+			l.Logger.Log(bgCtx, slog.LevelError, fmt.Sprint(args[0]))
+		}
+	case 2:
+		l.Logger.Log(bgCtx, slog.LevelError, fmt.Sprint(args[0], " ", args[1]))
+	default:
+		l.Logger.Log(bgCtx, slog.LevelError, fmt.Sprint(args...))
+	}
 }
 
 func (l *loggerNew) Errorf(format string, args ...any) {
-	l.Logf(LevelError, format, args...)
+	if len(args) == 0 {
+		l.Logger.Log(bgCtx, slog.LevelError, format)
+		return
+	}
+	l.Logger.Log(bgCtx, slog.LevelError, fmt.Sprintf(format, args...))
 }
 
 func (l *loggerNew) Fatal(args ...any) {
