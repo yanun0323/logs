@@ -9,7 +9,7 @@ import (
 
 func TestTickerLogger(t *testing.T) {
 	writer := &bytes.Buffer{}
-	timer := NewTickerLogger(time.Hour, LevelDebug, &Option{Output: writer})
+	timer := NewTickerLogger(LevelDebug, time.Hour, &Option{Output: writer})
 	timer.Debug("debug")
 	timer.Info("info")
 	timer.Warn("warn")
@@ -20,7 +20,7 @@ func TestTickerLogger(t *testing.T) {
 	}
 
 	writer = &bytes.Buffer{}
-	timer = NewTickerLogger(time.Microsecond, LevelDebug, &Option{Output: writer})
+	timer = NewTickerLogger(LevelDebug, time.Microsecond, &Option{Output: writer})
 	time.Sleep(time.Microsecond)
 	timer.Debug("debug")
 	timer.Info("info")
@@ -34,7 +34,7 @@ func TestTickerLogger(t *testing.T) {
 
 func TestTickerLoggerInterval(t *testing.T) {
 	writer := &bytes.Buffer{}
-	timer := NewTickerLogger(time.Second, LevelDebug, &Option{Output: writer})
+	timer := NewTickerLogger(LevelDebug, time.Second, &Option{Output: writer})
 
 	for i := 0; i < 10; i++ {
 		timer.Debug("debug")

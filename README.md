@@ -113,7 +113,7 @@ Ticker logger is useful for preventing log spam by only outputting messages afte
 
 ```go
 // Only log once every 5 seconds
-tickerLogger := logs.NewTickerLogger(5*time.Second, logs.LevelInfo)
+tickerLogger := logs.NewTickerLogger(logs.LevelInfo, 5*time.Second)
 
 for i := 0; i < 1000; i++ {
     // This will only output a few times despite being called 1000 times

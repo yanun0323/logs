@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-
-	"github.com/yanun0323/logs/internal"
 )
 
 type loggerNew slog.Logger
@@ -52,15 +50,15 @@ func (l *loggerNew) WithFields(fields map[string]any) Logger {
 }
 
 func (l *loggerNew) WithError(err error) Logger {
-	return l.WithField(internal.KeyError, err)
+	return l.WithField(FieldKeyError, err)
 }
 
 func (l *loggerNew) WithContext(ctx context.Context) Logger {
-	return l.WithField(internal.KeyContext, ctx)
+	return l.WithField(FieldKeyContext, ctx)
 }
 
 func (l *loggerNew) WithFunc(function string) Logger {
-	return l.WithField(internal.KeyFunc, function)
+	return l.WithField(FieldKeyFunc, function)
 }
 
 func (l *loggerNew) Attach(ctx context.Context) context.Context {

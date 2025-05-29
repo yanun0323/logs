@@ -3,6 +3,7 @@ package logs
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -49,4 +50,46 @@ func TestTraceLoggerContext(t *testing.T) {
 	}
 
 	t.Log(string(all))
+}
+
+func BenchmarkTraceLoggerWithField(b *testing.B) {
+	trace := NewTraceLogger(LevelInfo, "trace", &Option{Output: EmptyOutput})
+
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			trace.WithField("trace", "function_name").Info("test message")
+		}
+	})
+}
+
+func BenchmarkTraceLoggerWithMultipleFields(b *testing.B) {
+	trace := NewTraceLogger(LevelInfo, "trace", &Option{Output: EmptyOutput})
+
+	fields := map[string]any{
+		"trace":   "function_name",
+		"user":    12345,
+		"action":  "login",
+		"success": true,
+	}
+
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			trace.WithFields(fields).Info("test message")
+		}
+	})
+}
+
+func BenchmarkTraceLoggerStackBuilding(b *testing.B) {
+	trace := NewTraceLogger(LevelInfo, "func", &Option{Output: EmptyOutput})
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		logger := trace
+		for j := 0; j < 10; j++ {
+			logger = logger.WithField("func", fmt.Sprintf("func_%d", j))
+		}
+		logger.Info("final message")
+	}
 }

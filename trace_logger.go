@@ -3,8 +3,8 @@ package logs
 import (
 	"bytes"
 	"context"
-	"fmt"
 
+	"github.com/yanun0323/logs/internal"
 	"github.com/yanun0323/logs/internal/buffer"
 )
 
@@ -35,8 +35,7 @@ func NewTraceLogger(level Level, traceFieldKeyword string, option ...*Option) Lo
 
 func (l *traceLogger) clone() *traceLogger {
 	buf := l.stack.Bytes()
-	stack := buffer.Pool.Get().(*bytes.Buffer)
-	stack.Reset()
+	stack := &bytes.Buffer{}
 	stack.Grow(len(buf) + 256)
 	stack.Write(buf)
 
@@ -55,20 +54,15 @@ func (l *traceLogger) Attach(ctx context.Context) context.Context {
 	return context.WithValue(ctx, logKey{}, l)
 }
 
-const (
-	_stackSeparator = " -> "
-)
-
 func (l *traceLogger) WithField(key string, value any) Logger {
 	if key == l.keyword {
 		buf := l.stack.Bytes()
-		str := fmt.Sprintf("%v", value)
-		stack := buffer.Pool.Get().(*bytes.Buffer)
-		stack.Reset()
-		stack.Grow(len(buf) + len(str) + len(_stackSeparator))
+		str := internal.ValueToString(value)
+		stack := buffer.Get()
+		stack.Grow(len(buf) + len(str) + len(_traceSep))
 		stack.Write(buf)
 		if stack.Len() != 0 {
-			stack.WriteString(_stackSeparator)
+			stack.WriteString(_traceSep)
 		}
 		stack.WriteString(str)
 
@@ -93,15 +87,19 @@ func (l *traceLogger) WithFields(fields map[string]any) Logger {
 
 	var (
 		hasStackFields bool
-		stackFields    = make(map[string][]any)
-		normalFields   = make(map[string]any, len(fields))
+		stackValues    []any // 改用 slice 而非 map，減少分配
+		normalFields   map[string]any
 	)
 
+	// 只在需要時分配 normalFields
 	for k, v := range fields {
 		if k == l.keyword {
-			stackFields[k] = append(stackFields[k], v)
+			stackValues = append(stackValues, v)
 			hasStackFields = true
 		} else {
+			if normalFields == nil {
+				normalFields = make(map[string]any, len(fields))
+			}
 			normalFields[k] = v
 		}
 	}
@@ -115,17 +113,17 @@ func (l *traceLogger) WithFields(fields map[string]any) Logger {
 
 	if hasStackFields {
 		buf := l.stack.Bytes()
-		for _, val := range stackFields {
-			stack = buffer.Pool.Get().(*bytes.Buffer)
-			stack.Reset()
-			stack.Grow(len(buf) + (len(_stackSeparator)+256)*len(val))
-			stack.Write(buf)
-			for _, v := range val {
-				if stack.Len() != 0 {
-					stack.WriteString(_stackSeparator)
-				}
-				stack.WriteString(fmt.Sprintf("%v", v))
+		stack = buffer.Get()
+		// 預估容量以減少重新分配
+		estimatedSize := len(buf) + (len(_traceSep)+32)*len(stackValues)
+		stack.Grow(estimatedSize)
+		stack.Write(buf)
+
+		for _, v := range stackValues {
+			if stack.Len() != 0 {
+				stack.WriteString(_traceSep)
 			}
+			stack.WriteString(internal.ValueToString(v))
 		}
 	}
 
@@ -151,7 +149,9 @@ func (l *traceLogger) withFieldsIfNeeded() Logger {
 	if len(fields) == 0 {
 		return l.Logger
 	}
-	return l.Logger.WithFields(fields)
+	logger := l.Logger.WithFields(fields)
+
+	return logger
 }
 
 func (l *traceLogger) Log(level Level, args ...any) {
