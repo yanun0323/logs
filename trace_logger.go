@@ -78,8 +78,8 @@ func (l *traceLogger) WithField(key string, value any) Logger {
 	}
 }
 
-func (l *traceLogger) WithFields(fields map[string]any) Logger {
-	if len(fields) == 0 {
+func (l *traceLogger) WithFields(args ...any) Logger {
+	if len(args) == 0 {
 		return l
 	}
 
@@ -90,15 +90,21 @@ func (l *traceLogger) WithFields(fields map[string]any) Logger {
 	)
 
 	// 只在需要時分配 normalFields
-	for k, v := range fields {
-		if k == l.keyword {
-			stackValues = append(stackValues, v)
-			hasStackFields = true
+	for len(args) != 0 {
+		s, ok := args[0].(string)
+		if !ok || len(args) == 1 {
+			break
+		}
+
+		if s == l.keyword {
+			stackValues = append(stackValues, args[1])
+			args = args[2:]
 		} else {
 			if normalFields == nil {
-				normalFields = make(map[string]any, len(fields))
+				normalFields = make(map[string]any, len(args))
 			}
-			normalFields[k] = v
+			normalFields[s] = args[1]
+			args = args[2:]
 		}
 	}
 

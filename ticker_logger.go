@@ -97,12 +97,12 @@ func (l *tickerLogger) WithField(key string, value any) Logger {
 	}
 }
 
-func (l *tickerLogger) WithFields(fields map[string]any) Logger {
+func (l *tickerLogger) WithFields(args ...any) Logger {
 	return &tickerLogger{
 		last:                atomic.LoadInt64(&l.last),
 		intervalMillisecond: l.intervalMillisecond,
 		nextFireTime:        atomic.LoadInt64(&l.nextFireTime),
-		Logger:              l.Logger.WithFields(fields),
+		Logger:              l.Logger.WithFields(args...),
 	}
 }
 

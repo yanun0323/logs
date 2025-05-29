@@ -34,17 +34,12 @@ func (l *logger) WithField(key string, value any) Logger {
 	return (*logger)((*slog.Logger)(l).With(key, value))
 }
 
-func (l *logger) WithFields(fields map[string]any) Logger {
-	if len(fields) == 0 {
+func (l *logger) WithFields(args ...any) Logger {
+	if len(args) == 0 {
 		return l
 	}
 
-	attrs := make([]any, 0, len(fields)*2)
-	for k, v := range fields {
-		attrs = append(attrs, k, v)
-	}
-
-	return (*logger)((*slog.Logger)(l).With(attrs...))
+	return (*logger)((*slog.Logger)(l).With(args...))
 }
 
 func (l *logger) WithError(err error) Logger {
