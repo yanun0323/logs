@@ -56,9 +56,12 @@ func (l *traceLogger) WithField(key string, value any) Logger {
 	if key == l.keyword {
 		str := internal.ValueToString(value)
 		stack := bytes.Buffer{}
-		stack.Grow(l.stack.Len() + len(str) + len(_traceSep))
-		stack.Write(l.stack.Bytes())
-		stack.WriteString(_traceSep)
+		currentLen := l.stack.Len()
+		stack.Grow(currentLen + len(str) + len(_traceSep))
+		if currentLen != 0 {
+			stack.Write(l.stack.Bytes())
+			stack.WriteString(_traceSep)
+		}
 		stack.WriteString(str)
 
 		return &traceLogger{
@@ -112,7 +115,7 @@ func (l *traceLogger) WithFields(fields map[string]any) Logger {
 
 		// 更精確的容量預估：當前長度 + 分隔符數量 + 預估每個值的長度
 		separatorCount := len(stackValues)
-		if currentLen > 0 {
+		if currentLen != 0 {
 			separatorCount++ // 需要在當前內容後加分隔符
 		} else {
 			separatorCount-- // 第一個值前不需要分隔符
@@ -122,12 +125,13 @@ func (l *traceLogger) WithFields(fields map[string]any) Logger {
 		stack.Grow(estimatedSize)
 
 		// 複製現有內容
-		if currentLen > 0 {
+		if currentLen != 0 {
 			stack.Write(l.stack.Bytes())
+			stack.WriteString(_traceSep)
 		}
 
 		for i, v := range stackValues {
-			if currentLen > 0 || i > 0 {
+			if i != 0 {
 				stack.WriteString(_traceSep)
 			}
 			stack.WriteString(internal.ValueToString(v))
