@@ -113,7 +113,7 @@ TickerLogger 對於防止日誌洪水很有用，只有在指定間隔後才輸�
 
 ```go
 // 每5秒只記錄一次
-tickerLogger := logs.NewTickerLogger(5*time.Second, logs.LevelInfo)
+tickerLogger := logs.NewTickerLogger(logs.LevelInfo, 5*time.Second)
 
 for i := 0; i < 1000; i++ {
     // 儘管被呼叫1000次，但只會輸出幾次
