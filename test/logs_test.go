@@ -123,9 +123,14 @@ func TestExample(t *testing.T) {
 		WithFunc("testFunc").
 		Info("info message with fields")
 
-	l.WithField("func", "testFunc").
-		WithField("func", "testFunc2").
-		WithField("func", "testFunc3").
+	l.WithField("func", "F0").
+		WithFields(map[string]any{
+			"func": "F1",
+		}).
+		WithField("func", "F2").
+		WithFields(map[string]any{
+			"func": "F3",
+		}).
 		Warn("warn message with func trace")
 
 	l.Error("error message")

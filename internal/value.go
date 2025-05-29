@@ -39,6 +39,6 @@ func ValueToString(value any) string {
 	case nil:
 		return _emptyString
 	default:
-		return fmt.Sprintf("%v", v)
+		return fmt.Sprint(v)
 	}
 }
