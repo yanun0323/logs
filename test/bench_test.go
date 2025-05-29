@@ -25,19 +25,13 @@ func BenchmarkLogsBasic(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.WithFields(map[string]any{
-				"key":  "value",
-				"key2": 123.456,
-			}).Info("test")
+			l.WithFields("key", "value", "key2", 123.456).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.WithFields(map[string]any{
-			"key":  "value",
-			"key2": 123.456,
-		}).Info("test")
+		l.WithFields("key", "value", "key2", 123.456).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -54,19 +48,13 @@ func BenchmarkLogsTicker(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.WithFields(map[string]any{
-				"key":  "value",
-				"key2": 123.456,
-			}).Info("test")
+			l.WithFields("key", "value", "key2", 123.456).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.WithFields(map[string]any{
-			"key":  "value",
-			"key2": 123.456,
-		}).Info("test")
+		l.WithFields("key", "value", "key2", 123.456).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -84,19 +72,13 @@ func BenchmarkLogsTrace(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.WithFields(map[string]any{
-				"key":  "value",
-				"key2": 123.456,
-			}).Info("test")
+			l.WithFields("key", "value", "key2", 123.456).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.WithFields(map[string]any{
-			"key":  "value",
-			"key2": 123.456,
-		}).Info("test")
+		l.WithFields("key", "value", "key2", 123.456).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -241,13 +223,15 @@ func BenchmarkZeroLog(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info().Msg("test")
-			l.Info().Any("key", "value").Any("key2", 123.456).Msg("test")
+			ll := l.With().Any("key", "value").Any("key2", 123.456).Logger()
+			ll.Info().Msg("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info().Msg("test")
-		l.Info().Any("key", "value").Any("key2", 123.456).Msg("test")
+		ll := l.With().Any("key", "value").Any("key2", 123.456).Logger()
+		ll.Info().Msg("test")
 	}
 
 	b.Cleanup(func() {

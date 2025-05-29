@@ -83,6 +83,10 @@ BenchmarkLogsBasic-8                     2731717              4563 ns/op        
 BenchmarkLogsTicker-8                   29113731             405.3 ns/op             792 B/op         14 allocs/op
 BenchmarkLogsTrace-8                     2453041              4923 ns/op            1816 B/op         32 allocs/op
 
+BenchmarkLogsBasic-8                     2569296              4730 ns/op             784 B/op         17 allocs/op
+BenchmarkLogsTicker-8                   43599924               274.8 ns/op           592 B/op         10 allocs/op
+BenchmarkLogsTrace-8                     3190927              3918 ns/op             512 B/op          8 allocs/op
+
 
 BenchmarkLogsTrace-8                     2554839              4862 ns/op            1136 B/op         18 allocs/op
 BenchmarkLogsTrace-8                     2805957              4526 ns/op            1019 B/op         18 allocs/op
