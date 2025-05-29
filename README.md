@@ -208,13 +208,9 @@ type Logger interface {
     Fatal(args ...any)
     Fatalf(format string, args ...any)
 
-    // Generic logging
-    Log(level Level, args ...any)
-    Logf(level Level, format string, args ...any)
-
     // Field management
     WithField(key string, value any) Logger
-    WithFields(fields map[string]any) Logger
+    WithFields(args ...any) Logger
     WithError(err error) Logger
     WithContext(ctx context.Context) Logger
     WithFunc(function string) Logger
