@@ -27,7 +27,7 @@ func New(level Level, option ...*Option) Logger {
 }
 
 func (l *logger) Copy() Logger {
-	return (*logger)((*slog.Logger)(l).With())
+	return (*logger)((*slog.Logger)(l).With(slog.Attr{}))
 }
 
 func (l *logger) WithField(key string, value any) Logger {
