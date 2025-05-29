@@ -73,6 +73,17 @@ PASS
 ok      github.com/yanun0323/logs/test  329.966s
 
 
+go test -bench=. -run=none -benchmem -v --count=1 -benchtime=30s ./test/
+goos: darwin
+goarch: arm64
+pkg: github.com/yanun0323/logs/test
+cpu: Apple M2
+BenchmarkLogsBasic
+BenchmarkLogsBasic-8                     2731717              4563 ns/op             824 B/op         17 allocs/op
+BenchmarkLogsTicker-8                   29113731             405.3 ns/op             792 B/op         14 allocs/op
+BenchmarkLogsTrace-8                     2453041              4923 ns/op            1816 B/op         32 allocs/op
+
+
 BenchmarkLogsTrace-8                     2554839              4862 ns/op            1136 B/op         18 allocs/op
 BenchmarkLogsTrace-8                     2805957              4526 ns/op            1019 B/op         18 allocs/op
 BenchmarkLogsTrace-8                     2751458              4483 ns/op            1003 B/op         18 allocs/op
