@@ -5,14 +5,13 @@ import (
 	"context"
 
 	"github.com/yanun0323/logs/internal"
-	"github.com/yanun0323/logs/internal/buffer"
 )
 
 type traceLogger struct {
 	Logger
 
 	keyword string
-	stack   *bytes.Buffer
+	stack   bytes.Buffer
 }
 
 // NewTraceLogger creates a new trace logger with the given level and trace field key.
@@ -29,13 +28,12 @@ func NewTraceLogger(level Level, traceFieldKeyword string, option ...*Option) Lo
 	return &traceLogger{
 		keyword: traceFieldKeyword,
 		Logger:  New(level, option...),
-		stack:   &bytes.Buffer{},
 	}
 }
 
 func (l *traceLogger) clone() *traceLogger {
 	buf := l.stack.Bytes()
-	stack := &bytes.Buffer{}
+	stack := bytes.Buffer{}
 	stack.Grow(len(buf) + 256)
 	stack.Write(buf)
 
@@ -56,14 +54,11 @@ func (l *traceLogger) Attach(ctx context.Context) context.Context {
 
 func (l *traceLogger) WithField(key string, value any) Logger {
 	if key == l.keyword {
-		buf := l.stack.Bytes()
 		str := internal.ValueToString(value)
-		stack := buffer.Get()
-		stack.Grow(len(buf) + len(str) + len(_traceSep))
-		stack.Write(buf)
-		if stack.Len() != 0 {
-			stack.WriteString(_traceSep)
-		}
+		stack := bytes.Buffer{}
+		stack.Grow(l.stack.Len() + len(str) + len(_traceSep))
+		stack.Write(l.stack.Bytes())
+		stack.WriteString(_traceSep)
 		stack.WriteString(str)
 
 		return &traceLogger{
@@ -112,15 +107,27 @@ func (l *traceLogger) WithFields(fields map[string]any) Logger {
 	}
 
 	if hasStackFields {
-		buf := l.stack.Bytes()
-		stack = buffer.Get()
-		// 預估容量以減少重新分配
-		estimatedSize := len(buf) + (len(_traceSep)+32)*len(stackValues)
-		stack.Grow(estimatedSize)
-		stack.Write(buf)
+		currentLen := l.stack.Len()
+		stack = bytes.Buffer{}
 
-		for _, v := range stackValues {
-			if stack.Len() != 0 {
+		// 更精確的容量預估：當前長度 + 分隔符數量 + 預估每個值的長度
+		separatorCount := len(stackValues)
+		if currentLen > 0 {
+			separatorCount++ // 需要在當前內容後加分隔符
+		} else {
+			separatorCount-- // 第一個值前不需要分隔符
+		}
+
+		estimatedSize := currentLen + separatorCount*len(_traceSep) + len(stackValues)*16 // 16 是預估每個值的平均長度
+		stack.Grow(estimatedSize)
+
+		// 複製現有內容
+		if currentLen > 0 {
+			stack.Write(l.stack.Bytes())
+		}
+
+		for i, v := range stackValues {
+			if currentLen > 0 || i > 0 {
 				stack.WriteString(_traceSep)
 			}
 			stack.WriteString(internal.ValueToString(v))
@@ -203,25 +210,40 @@ func (l *traceLogger) Fatalf(format string, args ...any) {
 }
 
 func (l *traceLogger) WithError(err error) Logger {
+	newLogger := l.Logger.WithError(err)
+	if newLogger == l.Logger {
+		// 如果底層 logger 沒有變化，直接返回自己
+		return l
+	}
 	return &traceLogger{
 		keyword: l.keyword,
-		Logger:  l.Logger.WithError(err),
+		Logger:  newLogger,
 		stack:   l.stack,
 	}
 }
 
 func (l *traceLogger) WithContext(ctx context.Context) Logger {
+	newLogger := l.Logger.WithContext(ctx)
+	if newLogger == l.Logger {
+		// 如果底層 logger 沒有變化，直接返回自己
+		return l
+	}
 	return &traceLogger{
 		keyword: l.keyword,
-		Logger:  l.Logger.WithContext(ctx),
+		Logger:  newLogger,
 		stack:   l.stack,
 	}
 }
 
 func (l *traceLogger) WithFunc(function string) Logger {
+	newLogger := l.Logger.WithFunc(function)
+	if newLogger == l.Logger {
+		// 如果底層 logger 沒有變化，直接返回自己
+		return l
+	}
 	return &traceLogger{
 		keyword: l.keyword,
-		Logger:  l.Logger.WithFunc(function),
+		Logger:  newLogger,
 		stack:   l.stack,
 	}
 }
