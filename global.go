@@ -7,9 +7,14 @@ import (
 )
 
 var (
+	initLogger = New(LevelInfo)
 	// defaultLogger is the default logger.
-	defaultLogger = internal.NewValue(New(LevelInfo))
+	defaultLogger = internal.NewValue(defaultLoggerWrapper{initLogger})
 )
+
+type defaultLoggerWrapper struct {
+	logger Logger
+}
 
 // logKey is the key for the logger in the context.
 type logKey struct{}
@@ -26,19 +31,19 @@ func Get(ctx context.Context) Logger {
 
 // Default returns the default logger.
 func Default() Logger {
-	l, ok := defaultLogger.Load().(Logger)
+	l, ok := defaultLogger.Load().(defaultLoggerWrapper)
 	if !ok {
-		l = New(LevelInfo)
+		l = defaultLoggerWrapper{logger: initLogger}
 		defaultLogger.Store(l)
 	}
 
-	return l
+	return l.logger
 }
 
 // SetDefault sets the default logger.
 func SetDefault(logger Logger) {
 	if logger != nil {
-		defaultLogger.Store(logger)
+		defaultLogger.Store(defaultLoggerWrapper{logger: logger})
 	}
 }
 

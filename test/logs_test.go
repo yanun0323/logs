@@ -10,6 +10,16 @@ import (
 	"github.com/yanun0323/logs"
 )
 
+func TestSetDefault(t *testing.T) {
+	log := logs.NewTraceLogger(logs.LevelInfo, logs.FieldKeyFunc)
+	logs.SetDefault(log)
+	log.Info("Test")
+
+	log2 := logs.New(logs.LevelInfo)
+	logs.SetDefault(log2)
+	log2.Info("Test")
+}
+
 func TestGet(t *testing.T) {
 	log := logs.Get(context.Background())
 	log.Info("Test")
