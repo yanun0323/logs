@@ -140,7 +140,7 @@ var attrValueFunc = map[slog.Kind]func(slog.Value) string{
 		return strconv.FormatBool(v.Bool())
 	},
 	slog.KindAny: func(v slog.Value) string {
-		return fmt.Sprint(v.Any())
+		return fmt.Sprintf("%+v", v.Any())
 	},
 }
 

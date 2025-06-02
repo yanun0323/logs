@@ -37,6 +37,16 @@ func (opt *Option) createLoggerHandler(level Level) slog.Handler {
 	case FormatText:
 		return slog.NewTextHandler(opt.output(), &slog.HandlerOptions{
 			Level: slog.Level(level),
+			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+				if a.Key == slog.TimeKey {
+					switch a.Value.Kind() {
+					case slog.KindTime:
+						a.Value = slog.StringValue(a.Value.Time().Format(internal.GetDefaultTimeFormat()))
+					}
+				}
+
+				return a
+			},
 		})
 	case FormatJSON:
 		return slog.NewJSONHandler(opt.output(), &slog.HandlerOptions{

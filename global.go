@@ -7,10 +7,14 @@ import (
 )
 
 var (
-	initLogger = New(LevelInfo)
+	initLogger = setupLogger()
 	// defaultLogger is the default logger.
 	defaultLogger = internal.NewValue(defaultLoggerWrapper{initLogger})
 )
+
+func setupLogger() Logger {
+	return New(LevelInfo)
+}
 
 type defaultLoggerWrapper struct {
 	logger Logger
