@@ -52,6 +52,18 @@ func (l *traceLogger) Attach(ctx context.Context) context.Context {
 	return context.WithValue(ctx, logKey{}, l)
 }
 
+func (l *traceLogger) WithError(err error) Logger {
+	return l.With(KeyErr, err)
+}
+
+func (l *traceLogger) WithFunc(function string) Logger {
+	return l.With(KeyFunc, function)
+}
+
+func (l *traceLogger) WithCtx(ctx context.Context) Logger {
+	return l.With(KeyCtx, ctx)
+}
+
 func (l *traceLogger) With(args ...any) Logger {
 	if len(args) == 0 {
 		return l

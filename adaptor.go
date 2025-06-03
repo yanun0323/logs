@@ -15,6 +15,15 @@ type Logger interface {
 	// With copies the logger and adds pairs of key and value to the Logger.
 	With(args ...any) Logger
 
+	// WithError copies the logger and adds an error as single field (using the key defined in KeyErr) to the Logger.
+	WithError(err error) Logger
+
+	// WithFunc copies the logger and adds a function as single field (using the key defined in KeyFunc) to the Logger.
+	WithFunc(function string) Logger
+
+	// WithCtx copies the logger and adds a context as single field (using the key defined in KeyContext) to the Logger.
+	WithCtx(ctx context.Context) Logger
+
 	// Log will log a message at the level given as parameter.
 	//
 	// Warning: using Log at Fatal level will not respectively Exit.

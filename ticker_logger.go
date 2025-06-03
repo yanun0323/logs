@@ -70,6 +70,18 @@ func (l *tickerLogger) Copy() Logger {
 	}
 }
 
+func (l *tickerLogger) WithError(err error) Logger {
+	return l.With(KeyErr, err)
+}
+
+func (l *tickerLogger) WithFunc(function string) Logger {
+	return l.With(KeyFunc, function)
+}
+
+func (l *tickerLogger) WithCtx(ctx context.Context) Logger {
+	return l.With(KeyCtx, ctx)
+}
+
 func (l *tickerLogger) With(args ...any) Logger {
 	return &tickerLogger{
 		last:                atomic.LoadInt64(&l.last),

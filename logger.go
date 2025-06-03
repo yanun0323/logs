@@ -27,11 +27,7 @@ func New(level Level, option ...*Option) Logger {
 }
 
 func (l *logger) Copy() Logger {
-	return (*logger)((*slog.Logger)(l).With(slog.Attr{}))
-}
-
-func (l *logger) WithField(key string, value any) Logger {
-	return (*logger)((*slog.Logger)(l).With(key, value))
+	return (*logger)((*slog.Logger)(l))
 }
 
 func (l *logger) With(args ...any) Logger {
@@ -43,15 +39,15 @@ func (l *logger) With(args ...any) Logger {
 }
 
 func (l *logger) WithError(err error) Logger {
-	return l.WithField(KeyErr, err)
+	return l.With(KeyErr, err)
 }
 
-func (l *logger) WithContext(ctx context.Context) Logger {
-	return l.WithField(KeyCtx, ctx)
+func (l *logger) WithCtx(ctx context.Context) Logger {
+	return l.With(KeyCtx, ctx)
 }
 
 func (l *logger) WithFunc(function string) Logger {
-	return l.WithField(KeyFunc, function)
+	return l.With(KeyFunc, function)
 }
 
 func (l *logger) Attach(ctx context.Context) context.Context {
