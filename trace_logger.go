@@ -72,7 +72,7 @@ func (l *traceLogger) With(args ...any) Logger {
 	var (
 		hasStackFields bool
 		stackValues    []any // 改用 slice 而非 map，減少分配
-		normalFields   map[string]any
+		normalFields   []any
 	)
 
 	// 只在需要時分配 normalFields
@@ -83,13 +83,14 @@ func (l *traceLogger) With(args ...any) Logger {
 		}
 
 		if s == l.keyword {
+			hasStackFields = true
 			stackValues = append(stackValues, args[1])
 			args = args[2:]
 		} else {
 			if normalFields == nil {
-				normalFields = make(map[string]any, len(args))
+				normalFields = make([]any, 0, len(args))
 			}
-			normalFields[s] = args[1]
+			normalFields = append(normalFields, s, args[1])
 			args = args[2:]
 		}
 	}
@@ -98,7 +99,7 @@ func (l *traceLogger) With(args ...any) Logger {
 	stack := l.stack
 
 	if len(normalFields) != 0 {
-		logger = logger.With(normalFields)
+		logger = logger.With(normalFields...)
 	}
 
 	if hasStackFields {
@@ -137,24 +138,12 @@ func (l *traceLogger) With(args ...any) Logger {
 	}
 }
 
-func (l *traceLogger) fieldsToAttach() map[string]any {
-	if l.stack.Len() == 0 {
-		return nil
-	}
-
-	return map[string]any{
-		l.keyword: l.stack.String(),
-	}
-}
-
 func (l *traceLogger) withFieldsIfNeeded() Logger {
-	fields := l.fieldsToAttach()
-	if len(fields) == 0 {
+	if l.stack.Len() == 0 {
 		return l.Logger
 	}
-	logger := l.Logger.With(fields)
 
-	return logger
+	return l.Logger.With(l.keyword, l.stack.String())
 }
 
 func (l *traceLogger) Log(level Level, args ...any) {

@@ -13,13 +13,14 @@ func TestTraceLogger(t *testing.T) {
 	writer := &bytes.Buffer{}
 	trace := NewTraceLogger(LevelDebug, "func", &Option{Output: writer})
 
-	trace = trace.With("func", "func_1")
+	trace = trace.With("func", "func_1").With("hello", "world")
 	trace = trace.With("func", "func_2")
 	trace = trace.With("func", "func_3")
 
 	trace.Debug("debug")
 
 	result := writer.String()
+	t.Log(result)
 	if !strings.Contains(result, "func_1 -> func_2 -> func_3") {
 		t.Errorf("Expected trace to contain function chain, got: %s", result)
 	}
