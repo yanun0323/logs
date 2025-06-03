@@ -77,14 +77,14 @@ func main() {
 
     // 建立自訂日誌記錄器
     logger := logs.New(logs.LevelDebug)
-    logger.WithField("user_id", "12345").Info("使用者已登入")
+    logger.With("user_id", "12345").Info("使用者已登入")
 
     // 鏈式新增多個欄位
-    logger.WithFields(map[string]any{
+    logger.With(
         "method": "POST",
-        "path":   "/api/users",
+        "path": "/api/users",
         "status": 201,
-    }).Info("請求已完成")
+    ).Info("請求已完成")
 }
 ```
 
@@ -93,7 +93,7 @@ func main() {
 ```go
 func handleRequest(ctx context.Context) {
     // 將日誌記錄器附加到上下文
-    logger := logs.New(logs.LevelInfo).WithField("request_id", "abc123")
+    logger := logs.New(logs.LevelInfo).With("request_id", "abc123")
     ctx = logger.Attach(ctx)
 
     // 在後續的呼叫鏈中
@@ -129,9 +129,9 @@ TraceLogger 為指定的欄位鍵累積值，建立類似追蹤的輸出：
 ```go
 // 建立堆疊
 traceLogger := logs.NewTraceLogger(logs.LevelInfo, "trace")
-traceLogger = traceLogger.WithField("trace", "start")
-traceLogger = traceLogger.WithField("trace", "middle")
-traceLogger = traceLogger.WithField("trace", "end")
+traceLogger = traceLogger.With("trace", "start")
+traceLogger = traceLogger.With("trace", "middle")
+traceLogger = traceLogger.With("trace", "end")
 
 // 輸出將顯示：trace="start -> middle -> end"
 traceLogger.Info("操作已完成")
@@ -209,10 +209,9 @@ type Logger interface {
     Fatalf(format string, args ...any)
 
     // 欄位管理
-    WithField(key string, value any) Logger
-    WithFields(args ...any) Logger
-    WithError(err error) Logger
-    WithContext(ctx context.Context) Logger
+    With(args ...any) Logger
+    WithErr(err error) Logger
+    WithCtx(ctx context.Context) Logger
     WithFunc(function string) Logger
 
     // 工具方法

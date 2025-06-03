@@ -77,14 +77,14 @@ func main() {
 
     // 创建自定义日志记录器
     logger := logs.New(logs.LevelDebug)
-    logger.WithField("user_id", "12345").Info("用户已登录")
+    logger.With("user_id", "12345").Info("用户已登录")
 
     // 链式添加多个字段
-    logger.WithFields(map[string]any{
+    logger.With(
         "method": "POST",
-        "path":   "/api/users",
+        "path": "/api/users",
         "status": 201,
-    }).Info("请求已完成")
+    ).Info("请求已完成")
 }
 ```
 
@@ -93,7 +93,7 @@ func main() {
 ```go
 func handleRequest(ctx context.Context) {
     // 将日志记录器附加到上下文
-    logger := logs.New(logs.LevelInfo).WithField("request_id", "abc123")
+    logger := logs.New(logs.LevelInfo).With("request_id", "abc123")
     ctx = logger.Attach(ctx)
 
     // 在后续的调用链中
@@ -129,9 +129,9 @@ TraceLogger 为指定的字段键累积值，创建类似跟踪的输出：
 ```go
 // 构建堆栈
 traceLogger := logs.NewTraceLogger(logs.LevelInfo, "trace")
-traceLogger = traceLogger.WithField("trace", "start")
-traceLogger = traceLogger.WithField("trace", "middle")
-traceLogger = traceLogger.WithField("trace", "end")
+traceLogger = traceLogger.With("trace", "start")
+traceLogger = traceLogger.With("trace", "middle")
+traceLogger = traceLogger.With("trace", "end")
 
 // 输出将显示：trace="start -> middle -> end"
 traceLogger.Info("操作已完成")
@@ -209,10 +209,9 @@ type Logger interface {
     Fatalf(format string, args ...any)
 
     // 字段管理
-    WithField(key string, value any) Logger
-    WithFields(args ...any) Logger
-    WithError(err error) Logger
-    WithContext(ctx context.Context) Logger
+    With(args ...any) Logger
+    WithErr(err error) Logger
+    WithCtx(ctx context.Context) Logger
     WithFunc(function string) Logger
 
     // 工具方法

@@ -77,14 +77,14 @@ func main() {
 
     // Create custom logger
     logger := logs.New(logs.LevelDebug)
-    logger.WithField("user_id", "12345").Info("User logged in")
+    logger.With("user_id", "12345").Info("User logged in")
 
     // Chain multiple fields
-    logger.WithFields(map[string]any{
-        "method": "POST",
-        "path":   "/api/users",
-        "status": 201,
-    }).Info("Request completed")
+    logger.With(
+        "method", "POST",
+        "path", "/api/users",
+        "status", 201,
+    ).Info("Request completed")
 }
 ```
 
@@ -93,7 +93,7 @@ func main() {
 ```go
 func handleRequest(ctx context.Context) {
     // Attach logger to context
-    logger := logs.New(logs.LevelInfo).WithField("request_id", "abc123")
+    logger := logs.New(logs.LevelInfo).With("request_id", "abc123")
     ctx = logger.Attach(ctx)
 
     // Later in the call chain
@@ -129,9 +129,9 @@ Trace logger accumulates values for specified field keys, creating a trace-like 
 ```go
 // Build up the stack
 traceLogger := logs.NewTraceLogger(logs.LevelInfo, "trace")
-traceLogger = traceLogger.WithField("trace", "start")
-traceLogger = traceLogger.WithField("trace", "middle")
-traceLogger = traceLogger.WithField("trace", "end")
+traceLogger = traceLogger.With("trace", "start")
+traceLogger = traceLogger.With("trace", "middle")
+traceLogger = traceLogger.With("trace", "end")
 
 // Output will show: trace="start -> middle -> end"
 traceLogger.Info("Operation completed")
@@ -209,10 +209,9 @@ type Logger interface {
     Fatalf(format string, args ...any)
 
     // Field management
-    WithField(key string, value any) Logger
-    WithFields(args ...any) Logger
-    WithError(err error) Logger
-    WithContext(ctx context.Context) Logger
+    With(args ...any) Logger
+    WithErr(err error) Logger
+    WithCtx(ctx context.Context) Logger
     WithFunc(function string) Logger
 
     // Utility methods
