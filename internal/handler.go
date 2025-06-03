@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	KeyError   = "error"
-	KeyContext = "context"
-	KeyFunc    = "func"
+	KeyErr  = "error"
+	KeyCtx  = "context"
+	KeyFunc = "func"
 )
 
 const (
@@ -171,9 +171,9 @@ func (h *loggerHandler) WithGroup(name string) slog.Handler {
 
 var (
 	fieldKeyCache = map[string]string{
-		KeyError:   _colorPrefix + colorRed + "[" + KeyError + "]" + _colorReset,
-		KeyContext: _colorPrefix + colorCyan + "[" + KeyContext + "]" + _colorReset,
-		KeyFunc:    _colorPrefix + colorBrightBlue + "[" + KeyFunc + "]" + _colorReset,
+		KeyErr:  _colorPrefix + colorRed + "[" + KeyErr + "]" + _colorReset,
+		KeyCtx:  _colorPrefix + colorCyan + "[" + KeyCtx + "]" + _colorReset,
+		KeyFunc: _colorPrefix + colorBrightBlue + "[" + KeyFunc + "]" + _colorReset,
 	}
 )
 

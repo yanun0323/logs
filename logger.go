@@ -34,7 +34,7 @@ func (l *logger) WithField(key string, value any) Logger {
 	return (*logger)((*slog.Logger)(l).With(key, value))
 }
 
-func (l *logger) WithFields(args ...any) Logger {
+func (l *logger) With(args ...any) Logger {
 	if len(args) == 0 {
 		return l
 	}
@@ -43,15 +43,15 @@ func (l *logger) WithFields(args ...any) Logger {
 }
 
 func (l *logger) WithError(err error) Logger {
-	return l.WithField(FieldKeyError, err)
+	return l.WithField(KeyErr, err)
 }
 
 func (l *logger) WithContext(ctx context.Context) Logger {
-	return l.WithField(FieldKeyContext, ctx)
+	return l.WithField(KeyCtx, ctx)
 }
 
 func (l *logger) WithFunc(function string) Logger {
-	return l.WithField(FieldKeyFunc, function)
+	return l.WithField(KeyFunc, function)
 }
 
 func (l *logger) Attach(ctx context.Context) context.Context {

@@ -70,39 +70,12 @@ func (l *tickerLogger) Copy() Logger {
 	}
 }
 
-func (l *tickerLogger) WithContext(ctx context.Context) Logger {
+func (l *tickerLogger) With(args ...any) Logger {
 	return &tickerLogger{
 		last:                atomic.LoadInt64(&l.last),
 		intervalMillisecond: l.intervalMillisecond,
 		nextFireTime:        atomic.LoadInt64(&l.nextFireTime),
-		Logger:              l.Logger.WithContext(ctx),
-	}
-}
-
-func (l *tickerLogger) WithError(err error) Logger {
-	return &tickerLogger{
-		last:                atomic.LoadInt64(&l.last),
-		intervalMillisecond: l.intervalMillisecond,
-		nextFireTime:        atomic.LoadInt64(&l.nextFireTime),
-		Logger:              l.Logger.WithError(err),
-	}
-}
-
-func (l *tickerLogger) WithField(key string, value any) Logger {
-	return &tickerLogger{
-		last:                atomic.LoadInt64(&l.last),
-		intervalMillisecond: l.intervalMillisecond,
-		nextFireTime:        atomic.LoadInt64(&l.nextFireTime),
-		Logger:              l.Logger.WithField(key, value),
-	}
-}
-
-func (l *tickerLogger) WithFields(args ...any) Logger {
-	return &tickerLogger{
-		last:                atomic.LoadInt64(&l.last),
-		intervalMillisecond: l.intervalMillisecond,
-		nextFireTime:        atomic.LoadInt64(&l.nextFireTime),
-		Logger:              l.Logger.WithFields(args...),
+		Logger:              l.Logger.With(args...),
 	}
 }
 

@@ -13,9 +13,9 @@ func TestTraceLogger(t *testing.T) {
 	writer := &bytes.Buffer{}
 	trace := NewTraceLogger(LevelDebug, "func", &Option{Output: writer})
 
-	trace = trace.WithField("func", "func_1")
-	trace = trace.WithField("func", "func_2")
-	trace = trace.WithField("func", "func_3")
+	trace = trace.With("func", "func_1")
+	trace = trace.With("func", "func_2")
+	trace = trace.With("func", "func_3")
 
 	trace.Debug("debug")
 
@@ -30,17 +30,17 @@ func TestTraceLoggerContext(t *testing.T) {
 	trace := NewTraceLogger(LevelDebug, "func", &Option{Output: writer})
 
 	trace = trace.
-		WithField("func", "main").
-		WithField("keyword", "A").
-		WithField("single", "A")
+		With("func", "main").
+		With("keyword", "A").
+		With("single", "A")
 
 	ctx := trace.Attach(context.Background())
 
 	trace = Get(ctx)
 	trace = trace.
-		WithField("func", "sub").
-		WithField("keyword", "B").
-		WithField("single", "B")
+		With("func", "sub").
+		With("keyword", "B").
+		With("single", "B")
 
 	trace.Info("info")
 
@@ -52,13 +52,13 @@ func TestTraceLoggerContext(t *testing.T) {
 	t.Log(string(all))
 }
 
-func BenchmarkTraceLoggerWithField(b *testing.B) {
+func BenchmarkTraceLoggerWith(b *testing.B) {
 	trace := NewTraceLogger(LevelInfo, "trace", &Option{Output: EmptyOutput})
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			trace.WithField("trace", "function_name").Info("test message")
+			trace.With("trace", "function_name").Info("test message")
 		}
 	})
 }
@@ -76,7 +76,7 @@ func BenchmarkTraceLoggerWithMultipleFields(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			trace.WithFields(fields).Info("test message")
+			trace.With(fields).Info("test message")
 		}
 	})
 }
@@ -88,7 +88,7 @@ func BenchmarkTraceLoggerStackBuilding(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		logger := trace
 		for j := 0; j < 10; j++ {
-			logger = logger.WithField("func", fmt.Sprintf("func_%d", j))
+			logger = logger.With("func", fmt.Sprintf("func_%d", j))
 		}
 		logger.Info("final message")
 	}
@@ -104,7 +104,7 @@ func BenchmarkTraceLoggerDeepNesting(b *testing.B) {
 			logger := trace
 			// 模擬深度呼叫堆疊
 			for i := 0; i < 20; i++ {
-				logger = logger.WithField("trace", fmt.Sprintf("depth_%d", i))
+				logger = logger.With("trace", fmt.Sprintf("depth_%d", i))
 			}
 			logger.Info("deep call")
 		}
@@ -119,11 +119,11 @@ func BenchmarkTraceLoggerMixedFields(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			trace.
-				WithField("trace", "service_call").
-				WithField("user_id", 12345).
-				WithField("trace", "database_query").
-				WithField("duration", 150.5).
-				WithField("trace", "result_processing").
+				With("trace", "service_call").
+				With("user_id", 12345).
+				With("trace", "database_query").
+				With("duration", 150.5).
+				With("trace", "result_processing").
 				Info("request completed")
 		}
 	})
@@ -137,7 +137,7 @@ func BenchmarkTraceLoggerMemoryAllocation(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		logger := trace.WithField("func", "test_function")
+		logger := trace.With("func", "test_function")
 		logger.Info("allocation test")
 	}
 }

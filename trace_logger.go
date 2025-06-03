@@ -52,33 +52,7 @@ func (l *traceLogger) Attach(ctx context.Context) context.Context {
 	return context.WithValue(ctx, logKey{}, l)
 }
 
-func (l *traceLogger) WithField(key string, value any) Logger {
-	if key == l.keyword {
-		str := internal.ValueToString(value)
-		stack := bytes.Buffer{}
-		currentLen := l.stack.Len()
-		stack.Grow(currentLen + len(str) + len(_traceSep))
-		if currentLen != 0 {
-			stack.Write(l.stack.Bytes())
-			stack.WriteString(_traceSep)
-		}
-		stack.WriteString(str)
-
-		return &traceLogger{
-			keyword: l.keyword,
-			Logger:  l.Logger,
-			stack:   stack,
-		}
-	} else {
-		return &traceLogger{
-			keyword: l.keyword,
-			Logger:  l.Logger.WithField(key, value),
-			stack:   l.stack,
-		}
-	}
-}
-
-func (l *traceLogger) WithFields(args ...any) Logger {
+func (l *traceLogger) With(args ...any) Logger {
 	if len(args) == 0 {
 		return l
 	}
@@ -112,7 +86,7 @@ func (l *traceLogger) WithFields(args ...any) Logger {
 	stack := l.stack
 
 	if len(normalFields) != 0 {
-		logger = logger.WithFields(normalFields)
+		logger = logger.With(normalFields)
 	}
 
 	if hasStackFields {
@@ -166,7 +140,7 @@ func (l *traceLogger) withFieldsIfNeeded() Logger {
 	if len(fields) == 0 {
 		return l.Logger
 	}
-	logger := l.Logger.WithFields(fields)
+	logger := l.Logger.With(fields)
 
 	return logger
 }
@@ -217,43 +191,4 @@ func (l *traceLogger) Fatal(args ...any) {
 
 func (l *traceLogger) Fatalf(format string, args ...any) {
 	l.withFieldsIfNeeded().Fatalf(format, args...)
-}
-
-func (l *traceLogger) WithError(err error) Logger {
-	newLogger := l.Logger.WithError(err)
-	if newLogger == l.Logger {
-		// 如果底層 logger 沒有變化，直接返回自己
-		return l
-	}
-	return &traceLogger{
-		keyword: l.keyword,
-		Logger:  newLogger,
-		stack:   l.stack,
-	}
-}
-
-func (l *traceLogger) WithContext(ctx context.Context) Logger {
-	newLogger := l.Logger.WithContext(ctx)
-	if newLogger == l.Logger {
-		// 如果底層 logger 沒有變化，直接返回自己
-		return l
-	}
-	return &traceLogger{
-		keyword: l.keyword,
-		Logger:  newLogger,
-		stack:   l.stack,
-	}
-}
-
-func (l *traceLogger) WithFunc(function string) Logger {
-	newLogger := l.Logger.WithFunc(function)
-	if newLogger == l.Logger {
-		// 如果底層 logger 沒有變化，直接返回自己
-		return l
-	}
-	return &traceLogger{
-		keyword: l.keyword,
-		Logger:  newLogger,
-		stack:   l.stack,
-	}
 }

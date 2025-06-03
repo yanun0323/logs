@@ -11,7 +11,7 @@ import (
 )
 
 func TestSetDefault(t *testing.T) {
-	log := logs.NewTraceLogger(logs.LevelInfo, logs.FieldKeyFunc)
+	log := logs.NewTraceLogger(logs.LevelInfo, logs.KeyFunc)
 	logs.SetDefault(log)
 	log.Info("Test")
 
@@ -65,24 +65,24 @@ func TestLogs(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	log1 := logs.New(logs.LevelInfo)
-	log1.WithField("test", map[string]any{"test": true}).Info("access")
+	log1.With("test", map[string]any{"test": true}).Info("access")
 }
 
-func TestWithField(t *testing.T) {
-	log := logs.New(logs.LevelInfo).WithField("hello", "foo....")
+func TestWith(t *testing.T) {
+	log := logs.New(logs.LevelInfo).With("hello", "foo....")
 
 	log.Info("hello field info...")
-	log.WithField("user_id", "i'm user").WithField("info_id", "i'm order").Info("with user id")
+	log.With("user_id", "i'm user").With("info_id", "i'm order").Info("with user id")
 }
 
-func TestWithFields(t *testing.T) {
-	log := logs.New(logs.LevelInfo).WithFields(map[string]any{
+func TestWiths(t *testing.T) {
+	log := logs.New(logs.LevelInfo).With(map[string]any{
 		"foo": 123,
 		"bar": "456",
 	})
 
 	log.Info("info...")
-	log.WithField("user_id", "i'm user").Info("with user id")
+	log.With("user_id", "i'm user").Info("with user id")
 }
 
 func TestFatal(t *testing.T) {
@@ -110,7 +110,7 @@ func TestLevel(t *testing.T) {
 
 	writer.Reset()
 
-	log.WithField("user_id", "i'm user").
+	log.With("user_id", "i'm user").
 		Warn("LEVEL with user id")
 
 	if writer.Len() == 0 {
@@ -127,18 +127,18 @@ func TestExample(t *testing.T) {
 
 	println()
 	l.Debug("debug message")
-	l.WithField("fields", "val").
-		WithError(nil).
-		WithContext(ctx).
-		WithFunc("testFunc").
+	l.With("fields", "val").
+		With(logs.KeyErr, nil).
+		With(logs.KeyCtx, ctx).
+		With(logs.KeyFunc, "testFunc").
 		Info("info message with fields")
 
-	l.WithField("func", "F0").
-		WithFields(map[string]any{
+	l.With("func", "F0").
+		With(map[string]any{
 			"func": "F1",
 		}).
-		WithField("func", "F2").
-		WithFields(map[string]any{
+		With("func", "F2").
+		With(map[string]any{
 			"func": "F3",
 		}).
 		Warn("warn message with func trace")

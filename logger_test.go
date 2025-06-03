@@ -14,8 +14,8 @@ func TestVariousLogger(t *testing.T) {
 	sl := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	t.Log("logger")
-	l.WithField("key", "value").
-		WithField("map", map[string]any{
+	l.With("key", "value").
+		With("map", map[string]any{
 			"struct": struct {
 				Foo     string
 				Bar     int
@@ -28,8 +28,8 @@ func TestVariousLogger(t *testing.T) {
 				Pointer: &[]int{1, 2, 3}[0],
 			},
 		}).
-		WithField("slice", []int{1, 2, 3}).
-		WithField("strings", strings.Join([]string{"foo", "bar", "baz"}, " -> ")).
+		With("slice", []int{1, 2, 3}).
+		With("strings", strings.Join([]string{"foo", "bar", "baz"}, " -> ")).
 		Info("logger")
 
 	t.Log("slog")
@@ -52,7 +52,7 @@ func TestVariousLogger(t *testing.T) {
 		Info("slog")
 }
 
-func TestWithFieldLoop(t *testing.T) {
+func TestWithLoop(t *testing.T) {
 	wg := sync.WaitGroup{}
 	l := New(LevelDebug)
 	count := 10
@@ -61,14 +61,14 @@ func TestWithFieldLoop(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 			funcName := fmt.Sprintf("fund-%d", i)
-			ll := l.WithField("func", funcName)
+			ll := l.With("func", funcName)
 			ll.Infof("%s done", funcName)
 		}(i)
 	}
 	wg.Wait()
 }
 
-func TestWithFieldsLoop(t *testing.T) {
+func TestWithsLoop(t *testing.T) {
 	wg := sync.WaitGroup{}
 	l := New(LevelDebug)
 	count := 10
@@ -77,7 +77,7 @@ func TestWithFieldsLoop(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 			funcName := fmt.Sprintf("fund-%d", i)
-			l = l.WithFields(map[string]any{"func": funcName})
+			l = l.With(map[string]any{"func": funcName})
 			l.Infof("%s done", funcName)
 		}(i)
 	}
