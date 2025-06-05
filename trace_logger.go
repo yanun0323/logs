@@ -3,6 +3,7 @@ package logs
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/yanun0323/logs/internal"
 )
@@ -53,7 +54,7 @@ func (l *traceLogger) Attach(ctx context.Context) context.Context {
 }
 
 func (l *traceLogger) WithError(err error) Logger {
-	return l.With(KeyErr, err)
+	return l.With(KeyErr, fmt.Sprintf("%+v", err))
 }
 
 func (l *traceLogger) WithFunc(function string) Logger {
