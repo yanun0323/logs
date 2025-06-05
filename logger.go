@@ -39,7 +39,7 @@ func (l *logger) With(args ...any) Logger {
 }
 
 func (l *logger) WithError(err error) Logger {
-	return l.With(KeyErr, err)
+	return l.With(KeyErr, fmt.Sprintf("%+v", err))
 }
 
 func (l *logger) WithCtx(ctx context.Context) Logger {
