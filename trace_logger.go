@@ -50,7 +50,7 @@ func (l *traceLogger) Copy() Logger {
 }
 
 func (l *traceLogger) Attach(ctx context.Context) context.Context {
-	return context.WithValue(ctx, logKey{}, l)
+	return context.WithValue(ctx, logAttachKey, l)
 }
 
 func (l *traceLogger) WithError(err error) Logger {

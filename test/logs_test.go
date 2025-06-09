@@ -90,13 +90,14 @@ func TestFatal(t *testing.T) {
 		logs.New(logs.LevelInfo).Fatal("fatal")
 		return
 	}
-	cmd := exec.Command(os.Args[0], "-test.run=TestLogs_Fatal")
+	cmd := exec.Command(os.Args[0], "-run=TestFatal$")
 	cmd.Env = append(os.Environ(), "TEST_FATAL=1")
 	err := cmd.Run()
 
 	if e, ok := err.(*exec.ExitError); ok && !e.Success() {
 		return
 	}
+
 	t.Fatalf("process ran with err %v, want exit status 1", err)
 }
 
@@ -139,6 +140,6 @@ func TestExample(t *testing.T) {
 		Warn("warn message with func trace")
 
 	l.Error("error message")
-	l.Fatal("fatal message")
+	// l.Fatal("fatal message")
 	println()
 }

@@ -23,9 +23,11 @@ type defaultLoggerWrapper struct {
 // logKey is the key for the logger in the context.
 type logKey struct{}
 
+var logAttachKey = logKey{}
+
 // Get gets the logger from context. if there's no logger in context, it will create a new logger with 'info' level.
 func Get(ctx context.Context) Logger {
-	val := ctx.Value(logKey{})
+	val := ctx.Value(logAttachKey)
 	if logger, ok := val.(Logger); ok {
 		return logger
 	}

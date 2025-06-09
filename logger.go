@@ -51,7 +51,7 @@ func (l *logger) WithFunc(function string) Logger {
 }
 
 func (l *logger) Attach(ctx context.Context) context.Context {
-	return context.WithValue(ctx, logKey{}, l)
+	return context.WithValue(ctx, logAttachKey, l)
 }
 
 func (l *logger) Log(level Level, args ...any) {

@@ -93,7 +93,7 @@ func (l *tickerLogger) With(args ...any) Logger {
 }
 
 func (l *tickerLogger) Attach(ctx context.Context) context.Context {
-	return context.WithValue(ctx, logKey{}, l)
+	return context.WithValue(ctx, logAttachKey, l)
 }
 
 func (l *tickerLogger) Log(level Level, args ...any) {
