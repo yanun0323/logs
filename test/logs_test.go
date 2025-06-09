@@ -6,12 +6,13 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/yanun0323/logs"
 )
 
 func TestSetDefault(t *testing.T) {
-	log := logs.NewTraceLogger(logs.LevelInfo, logs.KeyFunc)
+	log := logs.NewTickerLogger(logs.LevelInfo, 1*time.Second)
 	logs.SetDefault(log)
 	log.Info("Test")
 
@@ -117,29 +118,4 @@ func TestLevel(t *testing.T) {
 	if writer.Len() == 0 {
 		t.Errorf("writer len is 0")
 	}
-}
-
-func TestExample(t *testing.T) {
-	l := logs.NewTraceLogger(logs.LevelDebug, "func", &logs.Option{
-		// Output: logs.FileOutput(".", "test_example"),
-		// Format: logs.FormatText,
-	})
-	ctx := context.TODO()
-
-	println()
-	l.Debug("debug message")
-	l.With("fields", "val").
-		With(logs.KeyErr, nil).
-		With(logs.KeyCtx, ctx).
-		With(logs.KeyFunc, "testFunc").
-		Info("info message with fields")
-
-	l.With("func", "F0").
-		With("func", "F1", "func", "F2").
-		With("func", "F3").
-		Warn("warn message with func trace")
-
-	l.Error("error message")
-	// l.Fatal("fatal message")
-	println()
 }

@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/yanun0323/logs/internal/buffer"
+	"github.com/yanun0323/logs/internal/colorize"
 )
 
 const (
@@ -20,8 +21,8 @@ const (
 const (
 	_space        byte   = ' '
 	_newline      byte   = '\n'
-	_bracketOpen  byte   = '['
-	_bracketClose byte   = ']'
+	_bracketOpen  string = "["
+	_bracketClose string = "]"
 	_colorPrefix  string = "\x1b["
 	_colorReset   string = "\x1b[0m"
 )
@@ -36,12 +37,12 @@ var (
 		LevelFatal: LevelFatalTitle,
 	}
 
-	levelColorCache = map[int8]string{
-		LevelDebug: colorBrightBlue,
-		LevelInfo:  colorGreen,
-		LevelWarn:  colorBrightYellow,
-		LevelError: colorBrightRed,
-		LevelFatal: colorReverseRed,
+	levelColorCache = map[int8]colorize.Color{
+		LevelDebug: colorize.ColorBlue,
+		LevelInfo:  colorize.ColorGreen,
+		LevelWarn:  colorize.ColorYellow,
+		LevelError: colorize.ColorRed,
+		LevelFatal: colorize.ColorRedReversed,
 	}
 )
 
@@ -75,11 +76,11 @@ func (h *loggerHandler) Handle(ctx context.Context, r slog.Record) error {
 	buf.Grow(256)
 
 	timeStr := r.Time.Format(GetDefaultTimeFormat())
-	ColorizeToBuffer(buf, timeStr, colorBlack)
+	colorize.Fprint(buf, colorize.ColorBlack, timeStr)
 	buf.WriteByte(_space)
 
 	level := int8(r.Level)
-	ColorizeToBuffer(buf, LevelTitle(level), LevelColor(level))
+	colorize.Fprint(buf, LevelColor(level), LevelTitle(level))
 	buf.WriteByte(_space)
 
 	buf.WriteString(r.Message)
@@ -96,19 +97,17 @@ func (h *loggerHandler) Handle(ctx context.Context, r slog.Record) error {
 
 func (h *loggerHandler) writeAttrs(buf *bytes.Buffer) {
 	var (
-		str string
+		str   string
+		stack slog.Attr
 	)
+
 	for _, attr := range h.attrs {
-		if key, ok := fieldKeyCache[attr.Key]; ok {
-			buf.WriteString(key)
-		} else {
-			buf.WriteString(_colorPrefix)
-			buf.WriteString(colorMagenta)
-			buf.WriteByte(_bracketOpen)
-			buf.WriteString(attr.Key)
-			buf.WriteByte(_bracketClose)
-			buf.WriteString(_colorReset)
+		if attr.Key == KeyErrorsStack {
+			stack = attr
+			continue
 		}
+
+		writeFieldKey(buf, attr)
 
 		buf.WriteByte(_space)
 		if f, ok := attrValueFunc[attr.Value.Kind()]; ok {
@@ -117,9 +116,25 @@ func (h *loggerHandler) writeAttrs(buf *bytes.Buffer) {
 			str = fmt.Sprint(attr.Value.Any())
 		}
 
-		ColorizeToBuffer(buf, str, colorBlack)
+		colorize.Fprint(buf, colorize.ColorBlack, str)
 		buf.WriteByte(_space)
 		buf.WriteByte(_space)
+	}
+
+	if len(stack.Key) != 0 {
+		buf.WriteByte('\n')
+		buf.WriteString("    ")
+		writeFieldKey(buf, stack)
+		buf.WriteByte('\n')
+		buf.WriteString(stack.Value.String())
+	}
+}
+
+func writeFieldKey(buf *bytes.Buffer, attr slog.Attr) {
+	if key, ok := fieldKeyCache[attr.Key]; ok {
+		buf.WriteString(key)
+	} else {
+		colorize.Fprint(buf, colorize.ColorMagenta, _bracketOpen, attr.Key, _bracketClose)
 	}
 }
 
@@ -169,11 +184,18 @@ func (h *loggerHandler) WithGroup(name string) slog.Handler {
 	return h
 }
 
+const (
+	KeyErrorsStack = "error.stack"
+	KeyErrorsCause = "error.cause"
+)
+
 var (
 	fieldKeyCache = map[string]string{
-		KeyErr:  _colorPrefix + colorRed + "[" + KeyErr + "]" + _colorReset,
-		KeyCtx:  _colorPrefix + colorCyan + "[" + KeyCtx + "]" + _colorReset,
-		KeyFunc: _colorPrefix + colorBrightBlue + "[" + KeyFunc + "]" + _colorReset,
+		KeyErr:         colorize.Sprint(colorize.ColorRed, _bracketOpen, KeyErr, _bracketClose),
+		KeyCtx:         colorize.Sprint(colorize.ColorCyan, _bracketOpen, KeyCtx, _bracketClose),
+		KeyFunc:        colorize.Sprint(colorize.ColorBrightBlue, _bracketOpen, KeyFunc, _bracketClose),
+		KeyErrorsCause: colorize.Sprint(colorize.ColorYellow, _bracketOpen, KeyErrorsCause, _bracketClose),
+		KeyErrorsStack: colorize.Sprint(colorize.ColorCyan, _bracketOpen, KeyErrorsStack, _bracketClose),
 	}
 )
 
@@ -200,9 +222,9 @@ func LevelTitle(level int8) string {
 	return LevelInfoTitle
 }
 
-func LevelColor(level int8) string {
+func LevelColor(level int8) colorize.Color {
 	if color, ok := levelColorCache[level]; ok {
 		return color
 	}
-	return colorBrightGreen
+	return colorize.ColorBrightGreen
 }

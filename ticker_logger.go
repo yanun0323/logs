@@ -2,7 +2,6 @@ package logs
 
 import (
 	"context"
-	"fmt"
 	"sync/atomic"
 	"time"
 )
@@ -72,7 +71,7 @@ func (l *tickerLogger) Copy() Logger {
 }
 
 func (l *tickerLogger) WithError(err error) Logger {
-	return l.With(KeyErr, fmt.Sprintf("%+v", err))
+	return l.With(extractErrors(err)...)
 }
 
 func (l *tickerLogger) WithFunc(function string) Logger {

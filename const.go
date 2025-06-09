@@ -12,7 +12,3 @@ const (
 	// KeyFunc is the key for the function field with highlight.
 	KeyFunc = internal.KeyFunc
 )
-
-const (
-	_traceSep = " -> "
-)
