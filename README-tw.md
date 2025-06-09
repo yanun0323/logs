@@ -46,7 +46,6 @@ time=2025-05-28T04:29:22.422+08:00 level=ERROR+4 msg="fatal message"
 - **多種日誌記錄器類型**：
   - **標準日誌記錄器**：快速、高效的日誌記錄，可配置記錄等級
   - **TickerLogger**：速率限制的日誌記錄，僅在指定間隔後輸出
-  - **TraceLogger**：將欄位值累積到堆疊中，提供追蹤功能
 - **上下文整合**：對 Go 上下文的一流支援
 - **欄位鏈式呼叫**：流暢的 API 用於新增結構化欄位
 - **可配置輸出**：支援自訂輸出寫入器
@@ -122,21 +121,6 @@ for i := 0; i < 1000; i++ {
 }
 ```
 
-### TraceLogger
-
-TraceLogger 為指定的欄位鍵累積值，建立類似追蹤的輸出：
-
-```go
-// 建立堆疊
-traceLogger := logs.NewTraceLogger(logs.LevelInfo, "trace")
-traceLogger = traceLogger.With("trace", "start")
-traceLogger = traceLogger.With("trace", "middle")
-traceLogger = traceLogger.With("trace", "end")
-
-// 輸出將顯示：trace="start -> middle -> end"
-traceLogger.Info("操作已完成")
-```
-
 ## 日誌記錄器類型
 
 ### 標準日誌記錄器
@@ -153,13 +137,6 @@ traceLogger.Info("操作已完成")
 - 執行緒安全實作
 - 適用於高頻率操作
 
-### TraceLogger
-
-- 將欄位值累積到堆疊中
-- 非常適合追蹤執行路徑
-- 可配置堆疊欄位鍵
-- 維護呼叫階層
-
 ## 效能基準測試
 
 與其他熱門 Go 日誌記錄庫的效能比較：
@@ -172,7 +149,7 @@ pkg: github.com/yanun0323/logs/test
 cpu: Apple M2
 BenchmarkLogsBasic-8                     8626179              4827 ns/op             272 B/op          9 allocs/op
 BenchmarkLogsTicker-8                  169353175             212.1 ns/op             272 B/op          8 allocs/op
-BenchmarkLogsTrace-8                     7778780              5162 ns/op            1152 B/op         18 allocs/op
+
 BenchmarkSlogWithTextHandler-8           8255836              5003 ns/op             240 B/op          6 allocs/op
 BenchmarkSlogWithJSONHandler-8           7863826              5220 ns/op             240 B/op          6 allocs/op
 BenchmarkSlogLogsHandler-8               9155694              4654 ns/op             224 B/op          6 allocs/op

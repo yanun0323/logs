@@ -46,7 +46,6 @@ time=2025-05-28T04:29:22.422+08:00 level=ERROR+4 msg="fatal message"
 - **Multiple Logger Types**:
   - **Standard Logger**: Fast, efficient logging with configurable levels
   - **Ticker Logger**: Rate-limited logging that only outputs after specified intervals
-  - **Trace Logger**: Accumulates field values into stacks for trace-like functionality
 - **Context Integration**: First-class support for Go contexts
 - **Field Chaining**: Fluent API for adding structured fields
 - **Configurable Output**: Support for custom output writers
@@ -122,21 +121,6 @@ for i := 0; i < 1000; i++ {
 }
 ```
 
-### Trace Logger
-
-Trace logger accumulates values for specified field keys, creating a trace-like output:
-
-```go
-// Build up the stack
-traceLogger := logs.NewTraceLogger(logs.LevelInfo, "trace")
-traceLogger = traceLogger.With("trace", "start")
-traceLogger = traceLogger.With("trace", "middle")
-traceLogger = traceLogger.With("trace", "end")
-
-// Output will show: trace="start -> middle -> end"
-traceLogger.Info("Operation completed")
-```
-
 ## Logger Types
 
 ### Standard Logger
@@ -152,13 +136,6 @@ traceLogger.Info("Operation completed")
 - Configurable time intervals
 - Thread-safe implementation
 - Useful for high-frequency operations
-
-### Trace Logger
-
-- Accumulates field values into stacks
-- Great for tracing execution paths
-- Configurable stack field keys
-- Maintains call hierarchy
 
 ## Performance Benchmarks
 
@@ -306,6 +283,22 @@ logs.SetDefault(logger)
 // Set custom time format
 logs.SetDefaultTimeFormat("2006-01-02 15:04:05")
 ```
+
+### Errors Package Integration
+
+This package interoperates with the [github.com/yanun0323/logs](https://github.com/yanun0323/errors) package.
+
+```go
+logger := logs.Default()
+
+err := errors.New("database connection failed").
+    With("host", "localhost").
+    With("port", 5432).
+
+logger.WithError(err).Error("Operation error")
+```
+
+When using with the `errors` package, errors created by `errors` package can be directly passed to log functions and will automatically extract structured fields and stack traces.
 
 ## Dependencies
 

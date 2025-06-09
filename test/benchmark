@@ -25,13 +25,13 @@ func BenchmarkLogsBasic(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.WithFields("key", "value", "key2", 123.456).Info("test")
+			l.With("key", "value", "key2", 123.456).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.WithFields("key", "value", "key2", 123.456).Info("test")
+		l.With("key", "value", "key2", 123.456).Info("test")
 	}
 
 	b.Cleanup(func() {
@@ -48,37 +48,13 @@ func BenchmarkLogsTicker(b *testing.B) {
 	b.RunParallel(func(p *testing.PB) {
 		for p.Next() {
 			l.Info("test")
-			l.WithFields("key", "value", "key2", 123.456).Info("test")
+			l.With("key", "value", "key2", 123.456).Info("test")
 		}
 	})
 
 	for b.Loop() {
 		l.Info("test")
-		l.WithFields("key", "value", "key2", 123.456).Info("test")
-	}
-
-	b.Cleanup(func() {
-		if err := writer.Remove(); err != nil {
-			b.Fatalf("remove writerL failed: %v", err)
-		}
-	})
-}
-
-func BenchmarkLogsTrace(b *testing.B) {
-	writer := switchableWriter(".", "logger.trace.log")
-
-	l := logs.NewTraceLogger(logs.LevelInfo, "key", &logs.Option{Output: writer})
-
-	b.RunParallel(func(p *testing.PB) {
-		for p.Next() {
-			l.Info("test")
-			l.WithFields("key", "value", "key2", 123.456).Info("test")
-		}
-	})
-
-	for b.Loop() {
-		l.Info("test")
-		l.WithFields("key", "value", "key2", 123.456).Info("test")
+		l.With("key", "value", "key2", 123.456).Info("test")
 	}
 
 	b.Cleanup(func() {
