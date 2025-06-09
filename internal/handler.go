@@ -97,7 +97,7 @@ func (h *loggerHandler) Handle(ctx context.Context, r slog.Record) error {
 
 func (h *loggerHandler) writeAttrs(buf *bytes.Buffer) {
 	var (
-		str   string
+		errs  []slog.Attr
 		stack slog.Attr
 	)
 
@@ -107,18 +107,21 @@ func (h *loggerHandler) writeAttrs(buf *bytes.Buffer) {
 			continue
 		}
 
-		writeFieldKey(buf, attr)
-
-		buf.WriteByte(_space)
-		if f, ok := attrValueFunc[attr.Value.Kind()]; ok {
-			str = f(attr.Value)
-		} else {
-			str = fmt.Sprint(attr.Value.Any())
+		if attr.Key == KeyErr {
+			errs = extractErrors(attr.Value.Any())
+			continue
 		}
 
-		colorize.Fprint(buf, colorize.ColorBlack, str)
-		buf.WriteByte(_space)
-		buf.WriteByte(_space)
+		writeAttr(buf, attr)
+	}
+
+	for _, attr := range errs {
+		if attr.Key == KeyErrorsStack {
+			stack = attr
+			continue
+		}
+
+		writeAttr(buf, attr)
 	}
 
 	if len(stack.Key) != 0 {
@@ -128,6 +131,23 @@ func (h *loggerHandler) writeAttrs(buf *bytes.Buffer) {
 		buf.WriteByte('\n')
 		buf.WriteString(stack.Value.String())
 	}
+}
+
+func writeAttr(buf *bytes.Buffer, attr slog.Attr) {
+	var str string
+
+	writeFieldKey(buf, attr)
+
+	buf.WriteByte(_space)
+	if f, ok := attrValueFunc[attr.Value.Kind()]; ok {
+		str = f(attr.Value)
+	} else {
+		str = fmt.Sprintf("%+v", attr.Value.Any())
+	}
+
+	colorize.Fprint(buf, colorize.ColorBlack, str)
+	buf.WriteByte(_space)
+	buf.WriteByte(_space)
 }
 
 func writeFieldKey(buf *bytes.Buffer, attr slog.Attr) {
@@ -155,6 +175,7 @@ var attrValueFunc = map[slog.Kind]func(slog.Value) string{
 		return strconv.FormatBool(v.Bool())
 	},
 	slog.KindAny: func(v slog.Value) string {
+		println(fmt.Sprintf("%+v", v.Any()))
 		return fmt.Sprintf("%+v", v.Any())
 	},
 }

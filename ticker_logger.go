@@ -71,7 +71,7 @@ func (l *tickerLogger) Copy() Logger {
 }
 
 func (l *tickerLogger) WithError(err error) Logger {
-	return l.With(extractErrors(err)...)
+	return l.With(KeyErr, err)
 }
 
 func (l *tickerLogger) WithFunc(function string) Logger {

@@ -1,24 +1,26 @@
-package logs
+package internal
 
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 
-	"github.com/yanun0323/logs/internal"
 	"github.com/yanun0323/logs/internal/buffer"
 	"github.com/yanun0323/logs/internal/colorize"
 	"github.com/yanun0323/logs/internal/errors"
 )
 
-func extractErrors(err error) []any {
+func extractErrors(err any) []slog.Attr {
 	yanunErr, ok := err.(errors.Error)
 	if !ok {
-		return []any{KeyErr, fmt.Sprintf("%+v", err)}
+		return []slog.Attr{
+			slog.String(KeyErr, fmt.Sprintf("%+v", err)),
+		}
 	}
 
-	args := make([]any, 0, len(yanunErr.Attributes())+len(yanunErr.Stack())+2)
-	args = append(args, internal.KeyErr, yanunErr.Message())
-	args = append(args, internal.KeyErrorsCause, yanunErr.Cause())
+	args := make([]slog.Attr, 0, len(yanunErr.Attributes())+len(yanunErr.Stack())+2)
+	args = append(args, slog.String(KeyErr, yanunErr.Message()))
+	args = append(args, slog.Any(KeyErrorsCause, yanunErr.Cause()))
 
 	for _, a := range yanunErr.Attributes() {
 		attr, ok := a.(errors.Attr)
@@ -28,7 +30,7 @@ func extractErrors(err error) []any {
 		}
 
 		key, value := attr.Parameters()
-		args = append(args, key, value)
+		args = append(args, slog.String(key, fmt.Sprintf("%+v", value)))
 	}
 
 	buf := buffer.Pool.Get().(*bytes.Buffer)
@@ -53,7 +55,7 @@ func extractErrors(err error) []any {
 		buf.WriteByte('\n')
 	}
 
-	args = append(args, internal.KeyErrorsStack, buf.String())
+	args = append(args, slog.String(KeyErrorsStack, buf.String()))
 
 	return args
 }
