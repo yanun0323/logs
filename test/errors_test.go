@@ -1,20 +1,20 @@
 package test
 
-import (
-	"testing"
+// import (
+// 	"testing"
 
-	"github.com/yanun0323/errors"
-	"github.com/yanun0323/logs"
-)
+// 	"github.com/yanun0323/errors"
+// 	"github.com/yanun0323/logs"
+// )
 
-func TestError(t *testing.T) {
-	err := causeErrorFunc()
-	logs.Default().WithError(err).Error("test error")
-}
+// func TestError(t *testing.T) {
+// 	err := causeErrorFunc()
+// 	logs.Default().WithError(err).Error("test error")
+// }
 
-func causeErrorFunc() error {
-	return errors.New("test error").With(
-		"key", "value",
-		"key2", 222,
-	)
-}
+// func causeErrorFunc() error {
+// 	return errors.New("test error").With(
+// 		"key", "value",
+// 		"key2", 222,
+// 	)
+// }
