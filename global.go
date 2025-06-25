@@ -109,3 +109,23 @@ func Warn(args ...any) {
 func Warnf(format string, args ...any) {
 	Default().Warnf(format, args...)
 }
+
+// With attaches the logger to the context.
+func With(args ...any) Logger {
+	return Default().With(args...)
+}
+
+// WithCtx attaches the logger to the context.
+func WithCtx(ctx context.Context) Logger {
+	return Default().WithCtx(ctx)
+}
+
+// WithFunc attaches the logger to the context.
+func WithFunc(function string) Logger {
+	return Default().WithFunc(function)
+}
+
+// WithError attaches the logger to the context.
+func WithError(err error) Logger {
+	return Default().WithError(err)
+}
