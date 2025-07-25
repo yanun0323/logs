@@ -11,6 +11,15 @@ import (
 )
 
 func extractErrors(err any) []slog.Attr {
+	if x, ok := err.(interface{ Unwrap() []error }); ok {
+		unwrapped := x.Unwrap()
+		result := make([]slog.Attr, 0, len(unwrapped))
+		for _, e := range unwrapped {
+			result = append(result, extractErrors(e)...)
+		}
+		return result
+	}
+
 	yanunErr, ok := err.(errors.Error)
 	if !ok {
 		return []slog.Attr{
