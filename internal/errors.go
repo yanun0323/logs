@@ -34,7 +34,6 @@ func extractErrors(err any) []slog.Attr {
 	for _, a := range yanunErr.Attributes() {
 		attr, ok := a.(errors.Attr)
 		if !ok {
-			println("not errors.Attr")
 			continue
 		}
 
@@ -50,7 +49,6 @@ func extractErrors(err any) []slog.Attr {
 	for _, f := range yanunErr.Stack() {
 		frame, ok := f.(errors.Frame)
 		if !ok {
-			println("not errors.Frame")
 			continue
 		}
 

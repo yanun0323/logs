@@ -72,7 +72,7 @@ func (h *loggerHandler) Handle(ctx context.Context, r slog.Record) error {
 	buf := buffer.Pool.Get().(*bytes.Buffer)
 	buf.Reset()
 	defer buffer.Pool.Put(buf)
-
+	buf.Reset()
 	buf.Grow(256)
 
 	timeStr := r.Time.Format(GetDefaultTimeFormat())
@@ -175,7 +175,6 @@ var attrValueFunc = map[slog.Kind]func(slog.Value) string{
 		return strconv.FormatBool(v.Bool())
 	},
 	slog.KindAny: func(v slog.Value) string {
-		println(fmt.Sprintf("%+v", v.Any()))
 		return fmt.Sprintf("%+v", v.Any())
 	},
 }
